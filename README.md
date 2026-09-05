@@ -7,7 +7,6 @@ Capstone repository for the DevOps Bootcamp 2026 final project.
 ```text
 devops-bootcamp-project/
 ├── README.md
-├── implementation_plan.md
 ├── docs/
 │   ├── architecture.md
 │   ├── runbook.md
@@ -39,10 +38,3 @@ devops-bootcamp-project/
     ├── deploy.sh
     └── smoke-test.sh
 ```
-
-## Notes
-
-`implementation_plan.md` is a working document for planning and tracking the
-build. Keep it in git so the project decisions are preserved, but do not include
-it in the published GitHub Pages submission unless useful parts are promoted into
-the formal docs.
