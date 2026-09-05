@@ -111,6 +111,41 @@ Status: planned nice-to-have
 This lets the docs include dashboard steps, Cloudflare setup, and console
 observations without pretending every click is automated.
 
+## Testing And Verification
+
+Every implementation doc should include a `Verification` section. Verification
+applies to IaC, containers, Ansible, monitoring, domains, and CI/CD.
+
+For Terraform/IaC, start with layered checks:
+
+```bash
+terraform fmt -check
+terraform validate
+terraform plan
+```
+
+After apply, document concrete verification commands or observations:
+
+```bash
+terraform output
+aws ec2 describe-instances
+aws ec2 describe-security-groups
+aws ec2 describe-route-tables
+```
+
+The Terraform verification checklist should confirm:
+
+- VPC CIDR is `10.0.0.0/24`
+- public subnet is `10.0.0.0/25`
+- private subnet is `10.0.0.128/25`
+- Web EC2 has an Elastic IP
+- Web EC2 allows public HTTP on port 80
+- private instances do not have public IPs
+- private subnet has outbound access through NAT
+
+CI/CD can later automate some checks, especially `fmt`, `validate`, and `plan`
+on pull requests.
+
 ## CI/CD Coverage
 
 Track CI/CD in `docs/cicd.md`. Start with GitHub Actions because this project is
