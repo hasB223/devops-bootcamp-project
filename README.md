@@ -9,9 +9,15 @@ devops-bootcamp-project/
 ├── README.md
 ├── docs/
 │   ├── architecture.md
+│   ├── documentation-conventions.md
 │   ├── git-workflow.md
+│   ├── terraform.md
+│   ├── docker.md
+│   ├── ansible.md
+│   ├── cicd.md
 │   ├── runbook.md
 │   ├── monitoring.md
+│   ├── cloudflare.md
 │   └── submission.md
 ├── app/
 │   ├── Dockerfile
