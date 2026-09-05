@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DevOps Bootcamp Final Project End State",
+    "output": "docs/assets/final-project-end-state.html",
+    "quality_profile": "showcase",
+    "viewBox": [1360, 820]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "User", "sublabel": "browser", "pos": [40, 338], "size": [110, 58] },
+    { "id": "cloudflare", "type": "external", "label": "Cloudflare DNS", "sublabel": "web + monitoring domains", "pos": [210, 338], "size": [150, 58] },
+    { "id": "github", "type": "external", "label": "GitHub Repo", "sublabel": "devops-bootcamp-project", "pos": [40, 92], "size": [150, 58] },
+    { "id": "terraform", "type": "cloud", "label": "Terraform", "sublabel": "provisions AWS", "pos": [250, 92], "size": [130, 58] },
+    { "id": "s3state", "type": "database", "label": "S3 State Bucket", "sublabel": "remote Terraform state", "pos": [460, 92], "size": [145, 58] },
+    { "id": "ecr", "type": "database", "label": "ECR Registry", "sublabel": "devops-bootcamp/final-project-<nama>", "pos": [685, 92], "size": [200, 58] },
+    { "id": "webec2", "type": "backend", "label": "Web EC2", "sublabel": "10.0.0.5 + Elastic IP :80", "tag": "public subnet", "pos": [495, 338], "size": [175, 62] },
+    { "id": "app", "type": "backend", "label": "Dockerized App", "sublabel": "container from ECR", "pos": [742, 338], "size": [155, 62] },
+    { "id": "ansible", "type": "backend", "label": "Ansible Controller", "sublabel": "10.0.0.135", "tag": "private subnet", "pos": [500, 585], "size": [170, 62] },
+    { "id": "monitoring", "type": "backend", "label": "Monitoring EC2", "sublabel": "10.0.0.136", "tag": "private subnet", "pos": [742, 585], "size": [155, 62] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "scrapes metrics", "pos": [970, 500], "size": [145, 62] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "dashboard UI", "pos": [970, 665], "size": [145, 62] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS ap-southeast-1", "wraps": ["terraform", "s3state", "ecr", "webec2", "app", "ansible", "monitoring", "prometheus", "grafana"], "pad": 26 },
+    { "kind": "region", "label": "devops-vpc 10.0.0.0/24", "wraps": ["webec2", "app", "ansible", "monitoring", "prometheus", "grafana"], "pad": 24 },
+    { "kind": "security-group", "label": "Public subnet 10.0.0.0/25 / devops-public-sg", "wraps": ["webec2", "app"], "pad": 16 },
+    { "kind": "security-group", "label": "Private subnet 10.0.0.128/25 / devops-private-sg", "wraps": ["ansible", "monitoring", "prometheus", "grafana"], "pad": 16 }
+  ],
+  "connections": [
+    { "from": "user", "to": "cloudflare", "label": "web.infratify.com", "variant": "emphasis", "labelAt": [180, 410] },
+    { "from": "cloudflare", "to": "webec2", "label": "HTTP :80 via Elastic IP", "variant": "emphasis" },
+    { "from": "webec2", "to": "app", "variant": "emphasis" },
+    { "from": "ecr", "to": "app", "label": "image pull", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "orthogonal-v", "labelAt": [850, 245] },
+    { "from": "github", "to": "terraform", "label": "IaC source", "variant": "dashed" },
+    { "from": "terraform", "to": "s3state", "label": "state", "variant": "dashed" },
+    { "from": "terraform", "to": "webec2", "label": "creates infra", "variant": "dashed", "route": "orthogonal-v" },
+    { "from": "ansible", "to": "webec2", "label": "configures Docker host", "variant": "security", "route": "orthogonal-v", "labelAt": [455, 510] },
+    { "from": "ansible", "to": "monitoring", "label": "configures monitoring", "variant": "security", "labelAt": [706, 661] },
+    { "from": "monitoring", "to": "prometheus", "label": "runs", "variant": "emphasis" },
+    { "from": "prometheus", "to": "webec2", "label": "scrapes metrics", "variant": "dashed", "route": "orthogonal-v" },
+    { "from": "grafana", "to": "prometheus", "label": "queries", "variant": "emphasis" },
+    { "from": "cloudflare", "to": "grafana", "label": "monitoring.infratify.com", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[285, 780], [930, 780], [930, 696]], "labelAt": [640, 760] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Public Entry", "items": ["Cloudflare resolves the public web and monitoring names", "Elastic IP exposes the web server on port 80"] },
+    { "dot": "violet", "title": "Provision and Configure", "items": ["Terraform creates network, compute, ECR, and S3 state resources", "Ansible configures Docker and monitoring hosts"] },
+    { "dot": "emerald", "title": "Observe", "items": ["Prometheus scrapes the deployed service", "Grafana presents the final monitoring dashboard"] }
+  ]
+}
