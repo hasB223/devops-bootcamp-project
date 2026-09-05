@@ -5046,10 +5046,10 @@
         <path data-edge-from="github" data-edge-to="terraform" data-edge-label="IaC source" data-edge-key="4" data-composition-points="190,121;250,121" d="M 190 121 L 250 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="terraform" data-edge-to="s3state" data-edge-label="state" data-edge-key="5" data-composition-points="380,121;460,121" d="M 380 121 L 460 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6" data-composition-points="380,121;380,245;495,245;495,369" d="M 380 121 L 380 237 Q 380 245 388 245 L 487 245 Q 495 245 495 253 L 495 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="configures Docker host" data-edge-key="7" data-composition-points="500,616;500,492.5;670,492.5;670,369" d="M 500 616 L 500 500.5 Q 500 492.5 508 492.5 L 662 492.5 Q 670 492.5 670 484.5 L 670 369" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="configures Docker host" data-edge-key="7" data-composition-points="585,585;585,540;430,540;430,369;495,369" d="M 585 585 L 585 548 Q 585 540 577 540 L 438 540 Q 430 540 430 532 L 430 377 Q 430 369 438 369 L 495 369" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring" data-edge-key="8" data-composition-points="670,616;742,616" d="M 670 616 L 742 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="9" data-composition-points="897,616;933.5,616;933.5,531;970,531" d="M 897 616 L 925.5 616 Q 933.5 616 933.5 608 L 933.5 539 Q 933.5 531 941.5 531 L 970 531" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="10" data-composition-points="970,531;970,450;670,450;670,369" d="M 970 531 L 970 458 Q 970 450 962 450 L 678 450 Q 670 450 670 442 L 670 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="10" data-composition-points="970,531;930,531;930,450;582.5,450;582.5,400" d="M 970 531 L 938 531 Q 930 531 930 523 L 930 458 Q 930 450 922 450 L 590.5 450 Q 582.5 450 582.5 442 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="11" data-composition-points="1042.5,665;1042.5,562" d="M 1042.5 665 L 1042.5 562" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="12" data-composition-points="285,396;285,780;930,780;930,696;970,696" d="M 285 396 L 285 772 Q 285 780 293 780 L 922 780 Q 930 780 930 772 L 930 704 Q 930 696 938 696 L 970 696" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
@@ -5237,8 +5237,8 @@
           <text x="933.5" y="563.5" class="t-backend" font-size="8" text-anchor="middle">runs</text>
         </g>
         <g data-detail="context" data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="10">
-          <rect x="779" y="430" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="820" y="440" class="t-messagebus" font-size="8" text-anchor="middle">scrapes metrics</text>
+          <rect x="744" y="424" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="785" y="434" class="t-messagebus" font-size="8" text-anchor="middle">scrapes metrics</text>
         </g>
         <g data-detail="context" data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="11">
           <rect x="1020.7" y="645" width="43.6" height="14" rx="3" class="c-mask"/>

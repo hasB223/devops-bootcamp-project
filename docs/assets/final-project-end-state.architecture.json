@@ -35,10 +35,10 @@
     { "from": "github", "to": "terraform", "label": "IaC source", "variant": "dashed" },
     { "from": "terraform", "to": "s3state", "label": "state", "variant": "dashed" },
     { "from": "terraform", "to": "webec2", "label": "creates infra", "variant": "dashed", "route": "orthogonal-v" },
-    { "from": "ansible", "to": "webec2", "label": "configures Docker host", "variant": "security", "route": "orthogonal-v", "labelAt": [455, 510] },
+    { "from": "ansible", "to": "webec2", "label": "configures Docker host", "variant": "security", "fromSide": "top", "toSide": "left", "via": [[585, 540], [430, 540], [430, 369]], "labelAt": [455, 510] },
     { "from": "ansible", "to": "monitoring", "label": "configures monitoring", "variant": "security", "labelAt": [706, 661] },
     { "from": "monitoring", "to": "prometheus", "label": "runs", "variant": "emphasis" },
-    { "from": "prometheus", "to": "webec2", "label": "scrapes metrics", "variant": "dashed", "route": "orthogonal-v" },
+    { "from": "prometheus", "to": "webec2", "label": "scrapes metrics", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "via": [[930, 531], [930, 450], [582.5, 450]], "labelAt": [785, 434] },
     { "from": "grafana", "to": "prometheus", "label": "queries", "variant": "emphasis" },
     { "from": "cloudflare", "to": "grafana", "label": "monitoring.infratify.com", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[285, 780], [930, 780], [930, 696]], "labelAt": [640, 760] }
   ],
