@@ -9,6 +9,7 @@ devops-bootcamp-project/
 ├── README.md
 ├── docs/
 │   ├── architecture.md
+│   ├── git-workflow.md
 │   ├── runbook.md
 │   ├── monitoring.md
 │   └── submission.md
