@@ -78,5 +78,5 @@ git branch -d feature/branch-name
 ## Private Notes
 
 Do not put private planning, scratch notes, credentials, `.env` files, keys, or
-generated secrets into commits. Keep the submitted repository limited to the
+generated secrets into commits. Keep the public repository limited to the
 implementation, reproducible configuration, and clean documentation.
