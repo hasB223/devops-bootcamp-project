@@ -6,8 +6,8 @@ need to exist.
 
 ## Decision
 
-Use the Infisical Cloud free tier for the capstone. Do not self-host Infisical as
-part of the baseline.
+Use the Infisical Cloud free tier. Do not self-host Infisical as part of the
+baseline.
 
 Both deployment models provide the same core secrets-management platform, but
 their operational responsibilities differ:
@@ -18,15 +18,15 @@ their operational responsibilities differ:
 | Operations | Infisical manages availability and upgrades | We manage uptime, TLS, upgrades, monitoring and recovery |
 | Data location | Infisical-managed infrastructure | Infrastructure we control |
 | Cost | No charge within current free-tier limits | Compute, storage, backups and operational time |
-| Capacity | Currently five human or machine identities | Determined by the deployment and licence |
+| Capacity | Currently five human or machine identities, unlimited projects | Determined by the deployment and licence |
 | Failure ownership | Managed-service dependency | Our service, database or cache can fail |
-| Best fit | Individual capstone | Compliance or control requirements that justify operating another platform |
+| Best fit | Single-operator project with a small identity count | Compliance or control requirements that justify operating another platform |
 
 Self-hosting would add a new critical service whose Docker Compose deployment
 requires at least three containers: Infisical, PostgreSQL and Redis. It also
 creates a second set of bootstrap secrets, including the Infisical encryption
 key, authentication secret and database credentials. That work does not improve
-the capstone's required AWS, Ansible, application or monitoring path.
+this project's AWS, Ansible, application or monitoring path.
 
 References:
 
@@ -43,7 +43,7 @@ describes where or how a system runs but does not grant access by itself.
 | --- | --- |
 | Cloudflare tunnel or API token | Infisical |
 | Grafana administrator password | Infisical |
-| Grafana reviewer password | Infisical, then share outside the public repository |
+| Grafana scoped viewer password | Infisical, then share outside the public repository |
 | Application signing key or external API token | Infisical |
 | Database password, if a database is added | Infisical |
 | AWS credentials for GitHub Actions | Do not create; use GitHub OIDC to assume an AWS role |
@@ -61,7 +61,7 @@ environment. Add a secret only when a deployed component consumes it.
 /ansible
   CLOUDFLARE_TUNNEL_TOKEN
   GF_SECURITY_ADMIN_PASSWORD
-  GRAFANA_REVIEWER_PASSWORD
+  GRAFANA_VIEWER_PASSWORD
 
 /app
   APP_SECRET                 # only when the application needs one
@@ -76,7 +76,8 @@ unused credentials create maintenance work without protecting anything.
 ### Human administrator
 
 Use the normal Infisical account with two-factor authentication for setup and
-emergency administration. Do not share this account with the reviewer.
+emergency administration. Do not share the administrator account. Issue a
+separate scoped credential for anyone else who needs access.
 
 ### GitHub Actions
 
@@ -126,30 +127,49 @@ and [AWS Auth](https://infisical.com/docs/documentation/platform/identities/aws-
   retrieval.
 - Give GitHub Actions and the Ansible controller separate machine identities.
 - Scope each identity to only the project environment and paths it consumes,
-  within the access controls available on the selected plan.
+  where the current plan supports that restriction. See `Plan Constraints`.
 - Rotate a secret immediately if it appears in Git history, logs, screenshots or
-  submission documentation. Removing the visible text is not sufficient.
-- Keep reviewer credentials separate from administrator credentials and revoke
-  them after the review.
+  published documentation. Removing the visible text is not sufficient.
+- Keep externally shared credentials separate from administrator credentials and
+  revoke them when the access period ends.
 
-## Phase 0 Checklist
+## Plan Constraints
 
-Complete these items before Phase 1 needs a real secret:
+The free tier allows five human or machine identities and unlimited projects.
+Access Controls are a paid feature, currently 20 USD per identity per month on
+Pro. Two consequences follow on the free tier:
+
+- Per-path scoping of a machine identity is not enforceable. An identity that
+  can read the project can read every path in it. Treat path separation as
+  organisation, not as an access boundary.
+- The five-identity budget covers the human administrator and every machine
+  identity. Create an identity only when its consumer exists, and remove
+  identities that no longer have one.
+
+Revisit this section if the plan changes, because the scoping rule above becomes
+enforceable as soon as Access Controls are available.
+
+## Setup Checklist
+
+Complete these items before the first real secret is stored:
 
 - [ ] Create the Infisical Cloud account and enable two-factor authentication.
+- [ ] Store the account recovery codes outside Infisical.
 - [ ] Create project `devops-bootcamp-project` with environment `prod`.
 - [ ] Confirm the current free-tier identity and access-control limits.
 - [ ] Record only the non-secret project identifier in local planning notes.
 - [ ] Keep all real values out of Git and Terraform state.
 
-Complete these just in time, when their consumers exist:
+Complete these when their consumer exists, not before. Each one depends on
+something that must be created first:
 
-- [ ] Add Cloudflare secrets before the Cloudflare phase.
-- [ ] Add Grafana credentials before the monitoring deployment.
-- [ ] Create the controller machine identity after its IAM role exists.
-- [ ] Create the GitHub OIDC machine identity when the workflow needs secrets.
-- [ ] When writing the GitHub Actions workflow, put non-secret values (AWS
-  region, role ARN to assume, bucket names) in GitHub Actions variables, not
-  hardcoded in YAML or stored as GitHub secrets.
-- [ ] Verify each identity can read its required path and cannot read unrelated
-  secrets where the selected plan supports that restriction.
+- [ ] Add Cloudflare secrets once the tunnel or API integration exists.
+- [ ] Add Grafana credentials once the monitoring deployment exists.
+- [ ] Create the controller machine identity after its EC2 IAM role exists,
+  because the identity trusts that role.
+- [ ] Create the GitHub OIDC machine identity once a workflow needs a secret.
+- [ ] In the GitHub Actions workflow, put non-secret values (AWS region, role ARN
+  to assume, bucket names) in GitHub Actions variables, not hardcoded in YAML or
+  stored as GitHub secrets.
+- [ ] Verify each identity can read its required path, and record which
+  restrictions the current plan cannot enforce.
