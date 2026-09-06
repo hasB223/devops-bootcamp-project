@@ -9,6 +9,7 @@ devops-bootcamp-project/
 ├── README.md
 ├── docs/
 │   ├── architecture.md
+│   ├── secrets-management.md
 │   ├── documentation-conventions.md
 │   ├── git-workflow.md
 │   ├── terraform.md

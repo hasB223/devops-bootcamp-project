@@ -11,6 +11,7 @@ Use modular docs by layer, then one end-to-end runbook:
 ```text
 docs/
 ├── architecture.md
+├── secrets-management.md
 ├── git-workflow.md
 ├── terraform.md
 ├── docker.md
@@ -89,14 +90,17 @@ Document placement and naming, not values:
 
 ```text
 Grafana admin password:
-Store in a password manager or ignored local file.
+Store as GF_SECURITY_ADMIN_PASSWORD in Infisical path /ansible.
 
-Cloudflare API token:
-Export as CLOUDFLARE_API_TOKEN before running Terraform.
+Cloudflare tunnel token:
+Store as CLOUDFLARE_TUNNEL_TOKEN in Infisical path /ansible.
 
 Application .env:
-Create from .env.example and keep the real .env ignored.
+Define its secret names in .env.example; retrieve real values from Infisical.
 ```
+
+Follow `docs/secrets-management.md` for the authoritative secret inventory,
+identity flows and safety rules.
 
 ## Status Labels
 
@@ -162,24 +166,25 @@ The CI/CD doc should cover:
 - Docker image tag convention
 - push to ECR
 - deployment handoff, if the pipeline triggers Ansible or a server-side pull
-- required repository secrets and where to configure them in GitHub
+- required Infisical paths and non-secret workflow configuration
 - how to verify a successful run in the Actions dashboard
 
-For GitHub Actions secrets, document UI placement like this:
+Authenticate GitHub Actions to AWS and Infisical with OIDC. Document normal
+configuration separately from secrets:
 
 ```text
-GitHub -> Repository -> Settings -> Secrets and variables -> Actions
+GitHub Actions OIDC -> AWS IAM role
+GitHub Actions OIDC -> Infisical machine identity
 
-Repository secrets:
-- AWS_ACCESS_KEY_ID
-- AWS_SECRET_ACCESS_KEY
+Repository or environment variables:
 - AWS_REGION
+- AWS_ACCOUNT_ID
 - ECR_REPOSITORY
-- SSH_PRIVATE_KEY, if the pipeline deploys over SSH
 ```
 
-Do not commit secret values. If a secret can be replaced by OIDC later, document
-that as a hardening improvement after the baseline pipeline works.
+Do not create permanent AWS access keys for the workflow. If a provider cannot
+support identity-based authentication, document any GitHub repository secret as
+an explicit fallback and explain why it is needed.
 
 ## Rule Of Thumb
 
