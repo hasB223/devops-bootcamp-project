@@ -26,3 +26,28 @@ docker_restart_handler_state: "restarted"
 docker_users:
   - ubuntu
   - ssm-user
+
+# ==============================================================================
+# Phase 4: Monitoring & Observability Stack Configuration
+# ==============================================================================
+monitoring_stack_dir: "/opt/monitoring"
+
+# Node Exporter (Web Server: 10.0.0.5)
+node_exporter_port: 9100
+node_exporter_image: "prom/node-exporter:v1.8.2"
+
+# Prometheus (Monitoring Server: 10.0.0.136)
+prometheus_port: 9090
+prometheus_image: "prom/prometheus:v2.53.0"
+prometheus_scrape_interval: "15s"
+
+# Grafana (Monitoring Server: 10.0.0.136)
+grafana_port: 3000
+grafana_image: "grafana/grafana:11.1.0"
+grafana_admin_user: "admin"
+
+# Sensitive Credentials Direction:
+# The Grafana admin password is never hardcoded. It is resolved dynamically from
+# the GRAFANA_ADMIN_PASSWORD environment variable (populated via Infisical CLI)
+# or an ignored local vars file. A secure vault placeholder is provided as fallback.
+grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL', true) }}"

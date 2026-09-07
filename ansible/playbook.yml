@@ -3,8 +3,8 @@
 # DevOps Bootcamp Capstone - Master Configuration Playbook
 #
 # Target Nodes:
-#   - web-server (10.0.0.5): Docker + Web App container from private ECR
-#   - monitoring-server (10.0.0.136): Docker + Monitoring environment prep
+#   - web-server (10.0.0.5): Docker + Web App container + node_exporter
+#   - monitoring-server (10.0.0.136): Docker + Prometheus & Grafana stack
 #
 # Execution Host:
 #   - ansible-controller (10.0.0.135) via VPC private network
@@ -80,7 +80,7 @@
       ignore_errors: true
 
 
-- name: Play 2 - Deploy Application Container on Web Server
+- name: Play 2 - Deploy Application Container & Node Exporter on Web Server
   hosts: web
   become: true
   gather_facts: false
@@ -136,8 +136,36 @@
       delay: 3
       changed_when: false
 
+    - name: Deploy node_exporter container on web server
+      community.docker.docker_container:
+        name: node_exporter
+        image: "{{ node_exporter_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "{{ node_exporter_port }}:9100"
+        volumes:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /:/rootfs:ro
+        command:
+          - '--path.procfs=/host/proc'
+          - '--path.sysfs=/host/sys'
+          - '--path.rootfs=/rootfs'
 
-- name: Play 3 - Monitoring Server Docker Verification & Directory Prep
+    - name: Verify node_exporter endpoint responds with HTTP 200
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ node_exporter_port }}/metrics"
+        method: GET
+        status_code: 200
+      register: node_exporter_http
+      until: node_exporter_http.status == 200
+      retries: 5
+      delay: 2
+      changed_when: false
+
+
+- name: Play 3 - Deploy Prometheus & Grafana Monitoring Stack
   hosts: monitoring
   become: true
   gather_facts: false
@@ -151,10 +179,99 @@
       register: docker_info
       changed_when: false
 
-    - name: Ensure monitoring stack directory exists
+    - name: Ensure monitoring stack directory hierarchy exists
       ansible.builtin.file:
-        path: /opt/monitoring
+        path: "{{ item }}"
         state: directory
         owner: ubuntu
         group: ubuntu
         mode: "0755"
+      loop:
+        - "{{ monitoring_stack_dir }}"
+        - "{{ monitoring_stack_dir }}/grafana"
+        - "{{ monitoring_stack_dir }}/grafana/provisioning"
+        - "{{ monitoring_stack_dir }}/grafana/provisioning/datasources"
+        - "{{ monitoring_stack_dir }}/grafana/provisioning/dashboards"
+        - "{{ monitoring_stack_dir }}/grafana/provisioning/dashboards/definitions"
+
+    - name: Deploy Prometheus scrape configuration
+      ansible.builtin.template:
+        src: templates/monitoring/prometheus.yaml.j2
+        dest: "{{ monitoring_stack_dir }}/prometheus.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+      register: prometheus_cfg
+
+    - name: Deploy Grafana datasource provisioning
+      ansible.builtin.copy:
+        src: files/monitoring/grafana/provisioning/datasources/prometheus.yaml
+        dest: "{{ monitoring_stack_dir }}/grafana/provisioning/datasources/prometheus.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Deploy Grafana dashboard provider
+      ansible.builtin.copy:
+        src: files/monitoring/grafana/provisioning/dashboards/dashboards.yaml
+        dest: "{{ monitoring_stack_dir }}/grafana/provisioning/dashboards/dashboards.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Deploy Grafana Node Exporter dashboard definition
+      ansible.builtin.copy:
+        src: files/monitoring/grafana/provisioning/dashboards/definitions/node-exporter.json
+        dest: "{{ monitoring_stack_dir }}/grafana/provisioning/dashboards/definitions/node-exporter.json"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Deploy Docker Compose configuration for monitoring stack
+      ansible.builtin.template:
+        src: templates/monitoring/compose.yaml.j2
+        dest: "{{ monitoring_stack_dir }}/compose.yaml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+      register: compose_cfg
+
+    - name: Launch monitoring container stack
+      ansible.builtin.command:
+        cmd: "docker compose up -d"
+        chdir: "{{ monitoring_stack_dir }}"
+      register: compose_up
+      changed_when: "'Started' in compose_up.stdout or 'Creating' in compose_up.stdout or 'Recreating' in compose_up.stdout"
+
+    - name: Verify Prometheus health endpoint responds with HTTP 200
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ prometheus_port }}/-/healthy"
+        method: GET
+        status_code: 200
+      register: prometheus_health
+      until: prometheus_health.status == 200
+      retries: 10
+      delay: 3
+      changed_when: false
+
+    - name: Verify Prometheus target status API responds with HTTP 200
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ prometheus_port }}/api/v1/targets"
+        method: GET
+        status_code: 200
+      register: prometheus_targets
+      until: prometheus_targets.status == 200
+      retries: 10
+      delay: 3
+      changed_when: false
+
+    - name: Verify Grafana operational health endpoint responds with HTTP 200
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ grafana_port }}/api/health"
+        method: GET
+        status_code: 200
+      register: grafana_health
+      until: grafana_health.status == 200
+      retries: 10
+      delay: 3
+      changed_when: false
