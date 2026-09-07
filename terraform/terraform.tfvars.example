@@ -1,0 +1,4 @@
+# Example variables file — copy to terraform.tfvars for custom overrides
+aws_region  = "ap-southeast-1"
+owner_slug  = "hasb"
+environment = "dev"
