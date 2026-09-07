@@ -173,6 +173,19 @@
     - group_vars/all.yml
 
   tasks:
+    - name: Validate Grafana admin password is provided and meets security standards
+      ansible.builtin.assert:
+        that:
+          - grafana_admin_password is defined
+          - grafana_admin_password | length >= 12
+          - grafana_admin_password != 'VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL'
+        fail_msg: >-
+          GRAFANA_ADMIN_PASSWORD is missing or set to the default placeholder.
+          Set a secure admin password of at least 12 characters via the
+          GRAFANA_ADMIN_PASSWORD environment variable (or Infisical) before deploying.
+        quiet: true
+      no_log: true
+
     - name: Verify Docker daemon operational status
       ansible.builtin.command:
         cmd: "docker info"
