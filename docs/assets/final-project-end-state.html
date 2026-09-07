@@ -5048,10 +5048,11 @@
         <path data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6" data-composition-points="380,121;380,245;495,245;495,369" d="M 380 121 L 380 237 Q 380 245 388 245 L 487 245 Q 495 245 495 253 L 495 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="configures Docker host" data-edge-key="7" data-composition-points="585,585;585,540;430,540;430,369;495,369" d="M 585 585 L 585 548 Q 585 540 577 540 L 438 540 Q 430 540 430 532 L 430 377 Q 430 369 438 369 L 495 369" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring" data-edge-key="8" data-composition-points="670,616;742,616" d="M 670 616 L 742 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="9" data-composition-points="897,616;933.5,616;933.5,531;970,531" d="M 897 616 L 925.5 616 Q 933.5 616 933.5 608 L 933.5 539 Q 933.5 531 941.5 531 L 970 531" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="10" data-composition-points="970,531;930,531;930,450;582.5,450;582.5,400" d="M 970 531 L 938 531 Q 930 531 930 523 L 930 458 Q 930 450 922 450 L 590.5 450 Q 582.5 450 582.5 442 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="11" data-composition-points="1042.5,665;1042.5,562" d="M 1042.5 665 L 1042.5 562" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="12" data-composition-points="285,396;285,780;930,780;930,696;970,696" d="M 285 396 L 285 772 Q 285 780 293 780 L 922 780 Q 930 780 930 772 L 930 704 Q 930 696 938 696 L 970 696" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9" data-composition-points="360,616;500,616" d="M 360 616 L 500 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="10" data-composition-points="897,616;933.5,616;933.5,531;970,531" d="M 897 616 L 925.5 616 Q 933.5 616 933.5 608 L 933.5 539 Q 933.5 531 941.5 531 L 970 531" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="11" data-composition-points="970,531;930,531;930,450;582.5,450;582.5,400" d="M 970 531 L 938 531 Q 930 531 930 523 L 930 458 Q 930 450 922 450 L 590.5 450 Q 582.5 450 582.5 442 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="12" data-composition-points="1042.5,665;1042.5,562" d="M 1042.5 665 L 1042.5 562" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="13" data-composition-points="285,396;285,430;180,430;180,780;930,780;930,696;970,696" d="M 285 396 L 285 422 Q 285 430 277 430 L 188 430 Q 180 430 180 438 L 180 772 Q 180 780 188 780 L 922 780 Q 930 780 930 772 L 930 704 Q 930 696 938 696 L 970 696" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-user" data-node-id="user" data-node-label="User" tabindex="0" role="button" aria-label="Focus User, browser, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="browser" data-node-context="Architecture component">
@@ -5198,6 +5199,18 @@
         <text data-detail="context" x="1042.5" y="710" class="t-muted" font-size="9" text-anchor="middle">dashboard UI</text>
         </g>
 
+        <g id="node-infisical" data-node-id="infisical" data-node-label="Infisical Cloud" tabindex="0" role="button" aria-label="Focus Infisical Cloud, secrets store (/ansible), Architecture component" aria-pressed="false" data-node-kind="security" data-node-sublabel="secrets store (/ansible)" data-node-context="Architecture component">
+          <title>Infisical Cloud · secrets store (/ansible) · Architecture component</title>
+          <rect x="210" y="585" width="150" height="62" rx="6" class="c-mask"/>
+          <rect x="210" y="585" width="150" height="62" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(216 591) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="285" y="614" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Infisical Cloud</text>
+        <text data-detail="context" x="285" y="630" class="t-muted" font-size="9" text-anchor="middle">secrets store (/ansible)</text>
+        </g>
+
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="user" data-edge-to="cloudflare" data-edge-label="web.infratify.com" data-edge-key="0">
           <rect x="134.2" y="400" width="91.6" height="14" rx="3" class="c-mask"/>
@@ -5232,19 +5245,23 @@
           <rect x="650.6" y="651" width="110.8" height="14" rx="3" class="c-mask"/>
           <text x="706" y="661" class="t-security" font-size="8" text-anchor="middle">configures monitoring</text>
         </g>
-        <g data-detail="context" data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="9">
+        <g data-detail="context" data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9">
+          <rect x="372.2" y="596" width="115.6" height="14" rx="3" class="c-mask"/>
+          <text x="430" y="606" class="t-security" font-size="8" text-anchor="middle">AWS IAM auth / secrets</text>
+        </g>
+        <g data-detail="context" data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="10">
           <rect x="918.5" y="553.5" width="30" height="14" rx="3" class="c-mask"/>
           <text x="933.5" y="563.5" class="t-backend" font-size="8" text-anchor="middle">runs</text>
         </g>
-        <g data-detail="context" data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="10">
+        <g data-detail="context" data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="11">
           <rect x="744" y="424" width="82" height="14" rx="3" class="c-mask"/>
           <text x="785" y="434" class="t-messagebus" font-size="8" text-anchor="middle">scrapes metrics</text>
         </g>
-        <g data-detail="context" data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="11">
+        <g data-detail="context" data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="12">
           <rect x="1020.7" y="645" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="1042.5" y="655" class="t-backend" font-size="8" text-anchor="middle">queries</text>
         </g>
-        <g data-detail="context" data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="12">
+        <g data-detail="context" data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="13">
           <rect x="577.4" y="750" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
           <text x="640" y="760" class="t-messagebus" font-size="8" text-anchor="middle">monitoring.infratify.com</text>
         </g>
@@ -5289,9 +5306,13 @@
             <rect x="350" y="795" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
             <text x="372" y="804" class="t-muted" font-size="10" font-weight="500">Cloud</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="440" data-legend-baseline="804" data-legend-width="83">
-            <rect x="440" y="795" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="462" y="804" class="t-muted" font-size="10" font-weight="500">External</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Security" data-legend-x="440" data-legend-baseline="804" data-legend-width="83">
+            <rect x="440" y="795" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
+            <text x="462" y="804" class="t-muted" font-size="10" font-weight="500">Security</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="545" data-legend-baseline="804" data-legend-width="83">
+            <rect x="545" y="795" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
+            <text x="567" y="804" class="t-muted" font-size="10" font-weight="500">External</text>
           </g>
         </g>
       </svg>
@@ -5498,7 +5519,7 @@
         </div>
         <ul>
           <li>&bull; Terraform creates network, compute, ECR, and S3 state resources</li>
-          <li>&bull; Ansible configures Docker and monitoring hosts</li>
+          <li>&bull; Infisical injects secrets via IAM; Ansible configures hosts</li>
         </ul>
       </div>
 
