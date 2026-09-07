@@ -19,7 +19,8 @@
     { "id": "ansible", "type": "backend", "label": "Ansible Controller", "sublabel": "10.0.0.135", "tag": "private subnet", "pos": [500, 585], "size": [170, 62] },
     { "id": "monitoring", "type": "backend", "label": "Monitoring EC2", "sublabel": "10.0.0.136", "tag": "private subnet", "pos": [742, 585], "size": [155, 62] },
     { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "scrapes metrics", "pos": [970, 500], "size": [145, 62] },
-    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "dashboard UI", "pos": [970, 665], "size": [145, 62] }
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "dashboard UI", "pos": [970, 665], "size": [145, 62] },
+    { "id": "infisical", "type": "security", "label": "Infisical Cloud", "sublabel": "secrets store (/ansible)", "pos": [210, 585], "size": [150, 62] }
   ],
   "boundaries": [
     { "kind": "region", "label": "AWS ap-southeast-1", "wraps": ["terraform", "s3state", "ecr", "webec2", "app", "ansible", "monitoring", "prometheus", "grafana"], "pad": 26 },
@@ -37,14 +38,15 @@
     { "from": "terraform", "to": "webec2", "label": "creates infra", "variant": "dashed", "route": "orthogonal-v" },
     { "from": "ansible", "to": "webec2", "label": "configures Docker host", "variant": "security", "fromSide": "top", "toSide": "left", "via": [[585, 540], [430, 540], [430, 369]], "labelAt": [455, 510] },
     { "from": "ansible", "to": "monitoring", "label": "configures monitoring", "variant": "security", "labelAt": [706, 661] },
+    { "from": "infisical", "to": "ansible", "label": "AWS IAM auth / secrets", "variant": "security" },
     { "from": "monitoring", "to": "prometheus", "label": "runs", "variant": "emphasis" },
     { "from": "prometheus", "to": "webec2", "label": "scrapes metrics", "variant": "dashed", "fromSide": "left", "toSide": "bottom", "via": [[930, 531], [930, 450], [582.5, 450]], "labelAt": [785, 434] },
     { "from": "grafana", "to": "prometheus", "label": "queries", "variant": "emphasis" },
-    { "from": "cloudflare", "to": "grafana", "label": "monitoring.infratify.com", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[285, 780], [930, 780], [930, 696]], "labelAt": [640, 760] }
+    { "from": "cloudflare", "to": "grafana", "label": "monitoring.infratify.com", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[285, 430], [180, 430], [180, 780], [930, 780], [930, 696]], "labelAt": [640, 760] }
   ],
   "cards": [
     { "dot": "cyan", "title": "Public Entry", "items": ["Cloudflare resolves the public web and monitoring names", "Elastic IP exposes the web server on port 80"] },
-    { "dot": "violet", "title": "Provision and Configure", "items": ["Terraform creates network, compute, ECR, and S3 state resources", "Ansible configures Docker and monitoring hosts"] },
+    { "dot": "violet", "title": "Provision and Configure", "items": ["Terraform creates network, compute, ECR, and S3 state resources", "Infisical injects secrets via IAM; Ansible configures hosts"] },
     { "dot": "emerald", "title": "Observe", "items": ["Prometheus scrapes the deployed service", "Grafana presents the final monitoring dashboard"] }
   ]
 }

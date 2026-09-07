@@ -73,6 +73,10 @@ unused credentials create maintenance work without protecting anything.
 
 ## Identity And Delivery
 
+### Secrets Architecture Diagram
+
+The end-to-end secrets flow—spanning human administration, GitHub OIDC authentication, EC2 IAM machine identity, and ephemeral playbook injection—is modeled in [secrets-management.architecture.json](assets/secrets-management.architecture.json).
+
 ### Human administrator
 
 Use the normal Infisical account with two-factor authentication for setup and
