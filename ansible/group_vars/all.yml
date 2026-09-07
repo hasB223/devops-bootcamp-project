@@ -1,0 +1,28 @@
+---
+# ==============================================================================
+# Global Variables for DevOps Bootcamp Capstone Ansible Automation
+# ==============================================================================
+
+# AWS Configuration
+aws_region: ap-southeast-1
+aws_account_id: "164824552037"
+ecr_registry: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+ecr_repository_name: "devops-bootcamp/final-project-hasb"
+app_image_tag: "latest"
+app_image: "{{ ecr_registry }}/{{ ecr_repository_name }}:{{ app_image_tag }}"
+
+# Application Deployment Configuration
+app_container_name: "devops-web-app"
+app_host_port: 80
+app_container_port: 80
+
+# geerlingguy.docker Role Configuration
+docker_edition: "ce"
+docker_packages_state: "present"
+docker_service_state: "started"
+docker_service_enabled: true
+docker_install_compose_plugin: true
+docker_restart_handler_state: "restarted"
+docker_users:
+  - ubuntu
+  - ssm-user
