@@ -2,3 +2,19 @@ implementation_plan.md
 notes/
 scratch/
 *.local.md
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.rc
+terraform.rc
+terraform.tfvars
+*.auto.tfvars
+

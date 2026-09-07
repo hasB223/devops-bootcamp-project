@@ -16,10 +16,9 @@ devops-bootcamp-project/
 │   ├── docker.md
 │   ├── ansible.md
 │   ├── cicd.md
-│   ├── runbook.md
 │   ├── monitoring.md
 │   ├── cloudflare.md
-│   └── submission.md
+│   └── runbook.md
 ├── app/
 │   ├── Dockerfile
 │   ├── compose.yaml
