@@ -1,0 +1,16 @@
+# Dependencies & build outputs
+node_modules
+dist
+
+# Git & documentation
+.git
+.gitignore
+README.md
+CREDITS.md
+
+# Environment & logs
+.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
