@@ -112,6 +112,7 @@ The Grafana admin password is **never** committed or hardcoded in version contro
   export GRAFANA_ADMIN_PASSWORD=$(infisical secrets get GRAFANA_ADMIN_PASSWORD --plain)
   ansible-playbook playbook.yml
   ```
+- **Fail-Fast Preflight Validation**: Play 3 asserts that `grafana_admin_password` is defined, has a minimum length of 12 characters, and does not equal the default vault placeholder. If the environment variable is unset or insecure, execution halts immediately with `no_log: true` before generating `compose.yaml` or starting containers.
 - **Local Fallback**: Alternatively, create an untracked `ansible/vault.yml` (gitignored) and pass `--extra-vars @vault.yml`.
 
 ---
