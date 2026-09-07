@@ -66,7 +66,11 @@ Verify the installation:
 terraform version
 ```
 
-#### AWS Authentication & Remote State Setup
+#### AWS Authentication & Remote State Setup (One-Time Bootstrap)
+
+> [!NOTE]
+> **Bootstrap Context (The "Chicken-and-Egg" Problem)**:
+> Terraform needs an S3 bucket to store its remote state (`terraform.tfstate`) and track resources. However, it cannot declare and create its own backend storage bucket within the same module where that backend is consumed. Therefore, the S3 state bucket is provisioned once via the AWS CLI as a prerequisite bootstrap step. All subsequent infrastructure (VPC, Subnets, Gateways, EC2 instances, Security Groups, IAM, and ECR) is managed 100% declaratively through Terraform.
 
 Ensure your local shell has AWS credentials configured:
 
@@ -74,12 +78,23 @@ Ensure your local shell has AWS credentials configured:
 export AWS_REGION=ap-southeast-1
 ```
 
-Confirm S3 state bucket `devops-bootcamp-terraform-hasb` exists in `ap-southeast-1`:
+Confirm or create the S3 state bucket `devops-bootcamp-terraform-hasb` with versioning enabled:
 
 ```bash
-aws s3api head-bucket --bucket devops-bootcamp-terraform-hasb
+# Check if bucket exists
+aws s3api head-bucket --bucket devops-bootcamp-terraform-hasb 2>/dev/null || {
+  # Create bucket in ap-southeast-1
+  aws s3api create-bucket \
+    --bucket devops-bootcamp-terraform-hasb \
+    --region ap-southeast-1 \
+    --create-bucket-configuration LocationConstraint=ap-southeast-1
+
+  # Enable versioning for state recovery and safety
+  aws s3api put-bucket-versioning \
+    --bucket devops-bootcamp-terraform-hasb \
+    --versioning-configuration Status=Enabled
+}
 ```
-*(If not yet created, create it via `aws s3api create-bucket --bucket devops-bootcamp-terraform-hasb --region ap-southeast-1 --create-bucket-configuration LocationConstraint=ap-southeast-1`)*.
 
 ### 2. Initialize Terraform
 
