@@ -19,8 +19,7 @@ docs/
 ├── cicd.md
 ├── monitoring.md
 ├── cloudflare.md
-├── runbook.md
-└── submission.md
+└── runbook.md
 ```
 
 ## Page Shape
@@ -69,7 +68,7 @@ terraform plan
 
 ## UI Steps
 
-Use concrete UI paths where the class or project uses a dashboard:
+Use concrete UI paths where the project uses a dashboard:
 
 ```text
 Grafana -> Connections -> Data sources -> Add data source -> Prometheus
@@ -108,7 +107,7 @@ Use honest status labels so manual and verified work can coexist:
 
 ```text
 Status: verified
-Status: manual, based on class workflow
+Status: manual, based on console workflow
 Status: planned nice-to-have
 ```
 
