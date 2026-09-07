@@ -22,6 +22,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "web" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = var.instance_type
+  key_name             = var.key_name
   subnet_id            = aws_subnet.public.id
   private_ip           = var.web_private_ip
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
@@ -60,6 +61,7 @@ resource "aws_eip" "web" {
 resource "aws_instance" "controller" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = var.instance_type
+  key_name             = var.key_name
   subnet_id            = aws_subnet.private.id
   private_ip           = var.controller_private_ip
   iam_instance_profile = aws_iam_instance_profile.controller_profile.name
@@ -86,6 +88,7 @@ resource "aws_instance" "controller" {
 resource "aws_instance" "monitoring" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = var.instance_type
+  key_name             = var.key_name
   subnet_id            = aws_subnet.private.id
   private_ip           = var.monitoring_private_ip
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name

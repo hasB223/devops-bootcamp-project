@@ -18,3 +18,8 @@ terraform.rc
 terraform.tfvars
 *.auto.tfvars
 
+# Ansible
+ansible/inventory.ini
+ansible/roles/
+*.retry
+.ansible/

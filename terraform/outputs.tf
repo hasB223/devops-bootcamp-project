@@ -46,3 +46,25 @@ output "ecr_repository_url" {
   description = "The URL of the ECR repository"
   value       = aws_ecr_repository.app.repository_url
 }
+
+# ==============================================================================
+# Ansible Outputs
+# ==============================================================================
+output "ansible_inventory" {
+  description = "Generated inventory content for Ansible controller"
+  value       = <<-EOT
+    [web]
+    web-server ansible_host=${aws_instance.web.private_ip}
+
+    [monitoring]
+    monitoring-server ansible_host=${aws_instance.monitoring.private_ip}
+
+    [targets:children]
+    web
+    monitoring
+
+    [targets:vars]
+    ansible_user=ubuntu
+    ansible_ssh_private_key_file=~/.ssh/devops-bootcamp-key
+  EOT
+}

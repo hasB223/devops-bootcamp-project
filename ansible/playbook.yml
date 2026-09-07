@@ -1,0 +1,160 @@
+---
+# ==============================================================================
+# DevOps Bootcamp Capstone - Master Configuration Playbook
+#
+# Target Nodes:
+#   - web-server (10.0.0.5): Docker + Web App container from private ECR
+#   - monitoring-server (10.0.0.136): Docker + Monitoring environment prep
+#
+# Execution Host:
+#   - ansible-controller (10.0.0.135) via VPC private network
+# ==============================================================================
+
+- name: Play 1 - Base Environment & Docker Setup on All Target Nodes
+  hosts: targets
+  become: true
+  gather_facts: true
+  vars_files:
+    - group_vars/all.yml
+
+  pre_tasks:
+    - name: Update apt cache if older than 1 hour
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - python3-pip
+          - python3-docker
+          - unzip
+        state: present
+
+    - name: Verify or install AWS CLI v2 for IAM ECR authentication
+      block:
+        - name: Check AWS CLI binary existence
+          ansible.builtin.command:
+            cmd: "which aws"
+          register: aws_cli_check
+          changed_when: false
+          failed_when: false
+
+        - name: Download AWS CLI v2 bundle if missing
+          ansible.builtin.get_url:
+            url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+            dest: "/tmp/awscliv2.zip"
+            mode: "0644"
+          when: aws_cli_check.rc != 0
+
+        - name: Unarchive AWS CLI bundle
+          ansible.builtin.unarchive:
+            src: "/tmp/awscliv2.zip"
+            dest: "/tmp"
+            remote_src: true
+          when: aws_cli_check.rc != 0
+
+        - name: Run AWS CLI installer
+          ansible.builtin.command:
+            cmd: "/tmp/aws/install"
+          when: aws_cli_check.rc != 0
+
+  roles:
+    - role: geerlingguy.docker
+
+  post_tasks:
+    - name: Ensure Docker service is enabled and started
+      ansible.builtin.systemd_service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure ssm-user is member of docker group
+      ansible.builtin.user:
+        name: ssm-user
+        groups: docker
+        append: true
+      ignore_errors: true
+
+
+- name: Play 2 - Deploy Application Container on Web Server
+  hosts: web
+  become: true
+  gather_facts: false
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+    - name: Retrieve ECR authentication token via EC2 IAM Instance Profile
+      ansible.builtin.command:
+        cmd: "aws ecr get-login-password --region {{ aws_region }}"
+      register: ecr_token
+      changed_when: false
+      no_log: true
+
+    - name: Authenticate Docker daemon to AWS Private ECR
+      community.docker.docker_login:
+        registry_url: "{{ ecr_registry }}"
+        username: AWS
+        password: "{{ ecr_token.stdout }}"
+        reauthorize: true
+      changed_when: false
+
+    - name: Pull application image from private ECR
+      community.docker.docker_image:
+        name: "{{ app_image }}"
+        source: pull
+        force_source: false
+      register: pull_image_result
+
+    - name: Deploy application container on port 80
+      community.docker.docker_container:
+        name: "{{ app_container_name }}"
+        image: "{{ app_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "{{ app_host_port }}:{{ app_container_port }}"
+        healthcheck:
+          test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:80/ || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 3
+          start_period: 5s
+
+    - name: Verify Web application endpoint responds with HTTP 200
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_host_port }}"
+        method: GET
+        status_code: 200
+      register: app_http_response
+      until: app_http_response.status == 200
+      retries: 10
+      delay: 3
+      changed_when: false
+
+
+- name: Play 3 - Monitoring Server Docker Verification & Directory Prep
+  hosts: monitoring
+  become: true
+  gather_facts: false
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+    - name: Verify Docker daemon operational status
+      ansible.builtin.command:
+        cmd: "docker info"
+      register: docker_info
+      changed_when: false
+
+    - name: Ensure monitoring stack directory exists
+      ansible.builtin.file:
+        path: /opt/monitoring
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"

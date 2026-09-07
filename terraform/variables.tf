@@ -57,3 +57,9 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "key_name" {
+  description = "EC2 Key Pair name for SSH authentication from Ansible Controller"
+  type        = string
+  default     = "has-dev-t14g2-wsl-keypair"
+}
