@@ -169,6 +169,8 @@
   hosts: monitoring
   become: true
   gather_facts: false
+  tags:
+    - monitoring
   vars_files:
     - group_vars/all.yml
 

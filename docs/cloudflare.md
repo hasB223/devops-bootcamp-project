@@ -40,7 +40,7 @@ layers:
 |   1. DNS A-Record: web.hasb.dev -> Elastic IP (Proxied)                           |
 |   2. Zero Trust Tunnel: devops-monitoring-tunnel                                  |
 |   3. Public Hostname: monitoring.hasb.dev -> HTTP localhost:3000                  |
-|   4. SSL/TLS Policy: Flexible (Lab origin) / Full Strict (TLS origin)             |
+|   4. SSL/TLS Policy: Flexible (Lab origin) / Full (strict) (TLS origin)           |
 +-----------------------------------------+-----------------------------------------+
                                           | Outbound TLS Tunnel (Port 443)
                                           v
@@ -136,7 +136,7 @@ layers:
    ```text
    Cloudflare Dashboard -> Websites -> hasb.dev -> SSL/TLS -> Overview
    ```
-   - **Target / Production Mode**: `Full` or `Full (strict)` is required when the
+   - **Target / Production Mode**: `Full (strict)` is required when the
      origin web server has an SSL/TLS certificate installed.
    - **Lab / Current Phase Mode**: Because the Web Server Nginx container serves
      plain HTTP on port 80 (origin certificates are not yet provisioned on the host),
@@ -202,24 +202,50 @@ layers:
 
 ### Part 3: Deploy Cloudflare Tunnel Connector via Ansible
 
-Execute Play 4 from the Ansible Controller (`10.0.0.135`):
+Execute the playbook from the Ansible Controller (`10.0.0.135`):
 
 ```bash
-# Option A: Injected securely via Infisical CLI
+# Option A: Full deployment via Infisical CLI (Recommended)
+# Deploys monitoring stack, applies GF_SERVER_ROOT_URL to Grafana, and starts tunnel:
+infisical run \
+  --projectId="6c8dad30-9f25-44dd-ae65-08c06580ceed" \
+  --env=prod \
+  --path=/ansible \
+  -- ansible-playbook -i inventory.ini playbook.yml
+
+# Option B: Tag-targeted deployment via Infisical CLI
+# If updating Grafana public root URL and launching tunnel together:
+infisical run \
+  --projectId="6c8dad30-9f25-44dd-ae65-08c06580ceed" \
+  --env=prod \
+  --path=/ansible \
+  -- ansible-playbook -i inventory.ini playbook.yml --tags monitoring,cloudflare
+
+# If deploying the tunnel connector alone (monitoring stack already configured):
 infisical run \
   --projectId="6c8dad30-9f25-44dd-ae65-08c06580ceed" \
   --env=prod \
   --path=/ansible \
   -- ansible-playbook -i inventory.ini playbook.yml --tags cloudflare
 
-# Option B: Run with exported local environment variables
+# Option C: Run with exported local environment variables
 GRAFANA_ADMIN_PASSWORD="<grafana_password>" \
 CLOUDFLARE_TUNNEL_TOKEN="<tunnel_token>" \
 ansible-playbook -i inventory.ini playbook.yml
 ```
 
+> [!IMPORTANT]
+> **Grafana Root URL Synchronization When Using Tags**:
+> If running with `--tags cloudflare` only, Play 3 is skipped. Any new or modified
+> `GF_SERVER_ROOT_URL=https://{{ monitoring_fqdn }}` setting in
+> `ansible/templates/monitoring/compose.yaml.j2` will **not** be re-templated or
+> applied to the running Grafana container.
+> To ensure Grafana redirects users to `https://monitoring.hasb.dev` instead of
+> `localhost:3000`, include the `monitoring` tag (`--tags monitoring,cloudflare`)
+> or execute the full playbook whenever domain variables change.
+
 The playbook executes:
-1. **Preflight Assertion**: Verifies `CLOUDFLARE_TUNNEL_TOKEN` is present, valid length, and non-placeholder.
+1. **Preflight Assertion**: Verifies `CLOUDFLARE_TUNNEL_TOKEN` is present, valid length (>= 30 characters), and non-placeholder (`no_log: true`).
 2. **Container Pull**: Fetches `cloudflare/cloudflared:2024.8.3`.
 3. **Container Launch**: Deploys `cloudflared` with `network_mode: host` and `restart_policy: unless-stopped`.
 4. **Health Inspection**: Queries the Docker daemon to confirm `cloudflared` is active and running.
@@ -234,13 +260,20 @@ is designed to be managed via Terraform in a later expansion.
 
 ### Provider Declaration
 
+> [!NOTE]
+> Syntax below is verified against **Cloudflare Terraform Provider v5** (`~> 5.0`, latest `5.24.0`).
+> In provider v5, resource names, tunnel attributes, and config structures differ significantly
+> from legacy v4 (e.g. `cloudflare_dns_record` replaces `cloudflare_record`, `tunnel_secret`
+> replaces `secret`, and `cloudflare_zero_trust_tunnel_cloudflared_token` data source provides
+> the connector token).
+
 ```hcl
 # terraform/cloudflare.tf (or a dedicated root module terraform-cloudflare/)
 terraform {
   required_providers {
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.39.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -253,7 +286,7 @@ provider "cloudflare" {
 ### DNS Record via Terraform
 
 ```hcl
-resource "cloudflare_record" "web" {
+resource "cloudflare_dns_record" "web" {
   zone_id = var.cloudflare_zone_id
   name    = "web"
   content = aws_eip.web.public_ip
@@ -271,27 +304,30 @@ resource "random_id" "tunnel_secret" {
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared" "monitoring_tunnel" {
-  account_id = var.cloudflare_account_id
-  name       = "devops-monitoring-tunnel"
-  secret     = random_id.tunnel_secret.b64_std
+  account_id    = var.cloudflare_account_id
+  name          = "devops-monitoring-tunnel"
+  config_src    = "cloudflare"
+  tunnel_secret = random_id.tunnel_secret.b64_std
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "monitoring_tunnel_cfg" {
   account_id = var.cloudflare_account_id
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id
 
-  config {
-    ingress_rule {
-      hostname = "monitoring.${var.domain_name}"
-      service  = "http://localhost:3000"
-    }
-    ingress_rule {
-      service = "http_status:404"
-    }
+  config = {
+    ingress = [
+      {
+        hostname = "monitoring.${var.domain_name}"
+        service  = "http://localhost:3000"
+      },
+      {
+        service = "http_status:404"
+      }
+    ]
   }
 }
 
-resource "cloudflare_record" "monitoring_cname" {
+resource "cloudflare_dns_record" "monitoring_cname" {
   zone_id = var.cloudflare_zone_id
   name    = "monitoring"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id}.cfargotunnel.com"
@@ -300,8 +336,15 @@ resource "cloudflare_record" "monitoring_cname" {
   ttl     = 1
 }
 
+# In provider v5, tunnel_token is NOT an exported attribute on the tunnel resource.
+# The token is retrieved via the cloudflare_zero_trust_tunnel_cloudflared_token data source:
+data "cloudflare_zero_trust_tunnel_cloudflared_token" "monitoring_tunnel_token" {
+  account_id = var.cloudflare_account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id
+}
+
 output "cloudflare_tunnel_token" {
-  value     = cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.tunnel_token
+  value     = data.cloudflare_zero_trust_tunnel_cloudflared_token.monitoring_tunnel_token.token
   sensitive = true
 }
 ```
@@ -405,7 +448,7 @@ INF Updated to new configuration config="..."
   3. Verify local curl on Web EC2 responds: `curl -I http://127.0.0.1:80`.
 
 ### Cloudflare Error 522: Connection Timed Out
-- **Cause**: Cloudflare SSL mode is set to `Full`, but the origin server does not
+- **Cause**: Cloudflare SSL mode is set to `Full (strict)`, but the origin server does not
   listen on port 443 or negotiate TLS.
 - **Resolution**: In Cloudflare Dashboard -> SSL/TLS -> Overview, ensure mode is set
   to **Flexible** until origin HTTPS certificates are provisioned.
