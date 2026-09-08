@@ -51,3 +51,24 @@ grafana_admin_user: "admin"
 # the GRAFANA_ADMIN_PASSWORD environment variable (populated via Infisical CLI)
 # or an ignored local vars file. A secure vault placeholder is provided as fallback.
 grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL', true) }}"
+
+# ==============================================================================
+# Phase 5: Domain & Cloudflare Tunnel Configuration
+# ==============================================================================
+domain_name: "hasb.dev"
+web_subdomain: "web"
+monitoring_subdomain: "monitoring"
+web_fqdn: "{{ web_subdomain }}.{{ domain_name }}"
+monitoring_fqdn: "{{ monitoring_subdomain }}.{{ domain_name }}"
+
+# Cloudflare Tunnel Connector (Monitoring Server: 10.0.0.136)
+cloudflared_image: "cloudflare/cloudflared:2024.8.3"
+cloudflared_container_name: "cloudflared"
+
+# Sensitive Credentials Direction:
+# The Cloudflare Tunnel token is never hardcoded. It is resolved dynamically from
+# the CLOUDFLARE_TUNNEL_TOKEN environment variable (injected via Infisical CLI
+# path /ansible/CLOUDFLARE_TUNNEL_TOKEN or temporary local shell fallback).
+# Play 4 enforces a fail-fast assertion before any container is launched.
+cloudflare_tunnel_token: "{{ lookup('env', 'CLOUDFLARE_TUNNEL_TOKEN') | default('VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL', true) }}"
+
