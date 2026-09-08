@@ -40,6 +40,9 @@ jobs:
       - name: Install Ansible
         run: pip install ansible
 
+      - name: Install Ansible Roles & Collections
+        run: ansible-galaxy install -r ansible/requirements.yml -p ansible/roles
+
       - name: Ansible Playbook Syntax Check
         run: ansible-playbook --syntax-check -i ansible/inventory.ini.example ansible/playbook.yml
 

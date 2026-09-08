@@ -92,8 +92,9 @@ The CI workflow acts as a mandatory pre-merge quality gate. It executes on every
 1. **Terraform Format Check**: `terraform -chdir=terraform fmt -check` enforces canonical formatting.
 2. **Backendless Initialization**: `terraform -chdir=terraform init -backend=false` prepares provider plugins without requiring S3 bucket access or AWS credentials.
 3. **Terraform Validation**: `terraform -chdir=terraform validate` verifies syntax and resource argument validity.
-4. **Ansible Syntax Check**: Installs Ansible via pip and validates syntax:
+4. **Ansible Syntax Check**: Installs Ansible via pip, installs declared Galaxy roles/collections (`geerlingguy.docker`), and validates syntax:
    ```bash
+   ansible-galaxy install -r ansible/requirements.yml -p ansible/roles
    ansible-playbook --syntax-check -i ansible/inventory.ini.example ansible/playbook.yml
    ```
 5. **Frontend Test & Build**:
