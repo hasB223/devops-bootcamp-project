@@ -111,9 +111,12 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     }
 
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:hasB223/devops-bootcamp-project:ref:refs/heads/main"]
+      values = [
+        "repo:hasB223/devops-bootcamp-project:ref:refs/heads/main",
+        "repo:hasB223@*/devops-bootcamp-project@*:ref:refs/heads/main"
+      ]
     }
   }
 }
