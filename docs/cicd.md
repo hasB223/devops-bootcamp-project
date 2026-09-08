@@ -40,7 +40,7 @@ Authentication between GitHub Actions and AWS is established using OpenID Connec
 | --- | --- |
 | **OIDC Provider URL** | `https://token.actions.githubusercontent.com` |
 | **Audience (`aud`)** | `sts.amazonaws.com` |
-| **Subject Claim (`sub`)** | `repo:hasB223/devops-bootcamp-project:ref:refs/heads/main` |
+| **Subject Claim (`sub`)** | Exact matching (`StringEquals`) for:<br>1. Standard: `repo:hasB223/devops-bootcamp-project:ref:refs/heads/main`<br>2. Immutable: `repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main` |
 | **IAM Role** | `devops-github-actions-role` |
 | **Role Permissions** | Scoped ECR push: `ecr:GetAuthorizationToken` (`*`), and image actions on `aws_ecr_repository.app.arn` |
 
@@ -158,13 +158,25 @@ This workflow publishes the interactive documentation portal (`docs/index.html`,
 
 ## Configuration Steps
 
-### 1. Apply Terraform OIDC Configuration
+### 1. Apply Terraform Infrastructure & OIDC Configuration
 
-Apply the Terraform configuration to provision the IAM OIDC provider and GitHub Actions execution role:
+#### Normal Project Workflow
+The standard project workflow plans and applies the full infrastructure stack (networking, compute, security groups, ECR, and IAM roles) together:
 
 ```bash
 cd terraform
-terraform apply -target=aws_iam_openid_connect_provider.github \
+terraform plan
+terraform apply
+```
+
+#### Narrow Bootstrap / Surgical Update Option
+Targeted apply using `-target` is reserved strictly as a narrow bootstrap or surgical update option (for example, provisioning or updating the CI/OIDC IAM role and ECR repository without spinning up the full EC2 compute instances):
+
+```bash
+cd terraform
+terraform apply -target=aws_ecr_repository.app \
+                -target=aws_ecr_lifecycle_policy.app \
+                -target=aws_iam_openid_connect_provider.github \
                 -target=aws_iam_role.github_actions \
                 -target=aws_iam_policy.github_actions_ecr \
                 -target=aws_iam_role_policy_attachment.github_actions_ecr
@@ -173,7 +185,7 @@ terraform apply -target=aws_iam_openid_connect_provider.github \
 Retrieve the provisioned role ARN:
 ```bash
 terraform output github_actions_role_arn
-# Example: arn:aws:iam::164824552037:role/devops-github-actions-role
+# Output: arn:aws:iam::164824552037:role/devops-github-actions-role
 ```
 
 ### 2. Configure GitHub Repository Variables
@@ -248,10 +260,14 @@ After pushing or merging to `main`:
   Error: Not authorized to perform sts:AssumeRoleWithWebIdentity
   ```
 - **Cause**: The IAM role trust policy does not match the GitHub repository or branch claim.
-- **Fix**: Verify `terraform/iam.tf` has the exact repository name and branch in the trust policy condition:
+- **Fix**: Verify `terraform/iam.tf` includes both exact claims in the trust policy condition:
   ```hcl
+  test     = "StringEquals"
   variable = "token.actions.githubusercontent.com:sub"
-  values   = ["repo:hasB223/devops-bootcamp-project:ref:refs/heads/main"]
+  values = [
+    "repo:hasB223/devops-bootcamp-project:ref:refs/heads/main",
+    "repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main"
+  ]
   ```
   Also ensure `audience = "sts.amazonaws.com"`.
 
