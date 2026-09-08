@@ -4,7 +4,7 @@
 #
 # Target Nodes:
 #   - web-server (10.0.0.5): Docker + Web App container + node_exporter
-#   - monitoring-server (10.0.0.136): Docker + Prometheus & Grafana stack
+#   - monitoring-server (10.0.0.136): Docker + Prometheus & Grafana stack + Cloudflare Tunnel
 #
 # Execution Host:
 #   - ansible-controller (10.0.0.135) via VPC private network
@@ -288,3 +288,55 @@
       retries: 10
       delay: 3
       changed_when: false
+
+
+- name: Play 4 - Deploy Cloudflare Tunnel Connector on Monitoring Server
+  hosts: monitoring
+  become: true
+  gather_facts: false
+  tags:
+    - cloudflare
+    - tunnel
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+    - name: Validate Cloudflare tunnel token is provided and meets security standards
+      ansible.builtin.assert:
+        that:
+          - cloudflare_tunnel_token is defined
+          - cloudflare_tunnel_token | length >= 30
+          - cloudflare_tunnel_token != 'VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL'
+        fail_msg: >-
+          CLOUDFLARE_TUNNEL_TOKEN is missing or set to the default placeholder.
+          Set a valid tunnel token via the CLOUDFLARE_TUNNEL_TOKEN environment
+          variable (or Infisical) before deploying the tunnel connector.
+        quiet: true
+      no_log: true
+
+    - name: Pull Cloudflare Tunnel container image
+      community.docker.docker_image:
+        name: "{{ cloudflared_image }}"
+        source: pull
+        force_source: false
+
+    - name: Deploy and launch Cloudflare Tunnel connector container
+      community.docker.docker_container:
+        name: "{{ cloudflared_container_name }}"
+        image: "{{ cloudflared_image }}"
+        state: started
+        restart_policy: unless-stopped
+        network_mode: host
+        command: "tunnel --no-autoupdate run --token {{ cloudflare_tunnel_token }}"
+      no_log: true
+
+    - name: Verify Cloudflare Tunnel container is operational
+      ansible.builtin.command:
+        cmd: "docker inspect --format='{{ '{{' }}.State.Running{{ '}}' }}' {{ cloudflared_container_name }}"
+      register: cloudflared_running_status
+      changed_when: false
+      failed_when: cloudflared_running_status.stdout != 'true'
+      retries: 5
+      delay: 2
+      until: cloudflared_running_status.stdout == 'true'
+
