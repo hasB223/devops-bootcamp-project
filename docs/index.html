@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Platform Documentation — hasb.dev</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --accent: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+      --accent-orange: #d29922;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    h1 {
+      color: var(--text-bright);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: #8b949e;
+      font-size: 1.1rem;
+    }
+    .section-title {
+      color: var(--text-bright);
+      font-size: 1.4rem;
+      margin: 2rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    /* Primary Endpoints Grid */
+    .endpoints-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .endpoint-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .endpoint-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .endpoint-card.web { border-top: 4px solid var(--accent); }
+    .endpoint-card.monitoring { border-top: 4px solid var(--accent-green); }
+    .endpoint-card.repo { border-top: 4px solid var(--accent-purple); }
+    .endpoint-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      margin-bottom: 0.8rem;
+      width: fit-content;
+    }
+    .badge-web { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+    .badge-monitoring { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+    .badge-repo { background: rgba(188, 140, 255, 0.15); color: var(--accent-purple); }
+    .endpoint-title {
+      font-size: 1.2rem;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+    }
+    .endpoint-url {
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      margin-bottom: 0.8rem;
+      display: inline-block;
+    }
+    .endpoint-url:hover { text-decoration: underline; }
+    .endpoint-desc {
+      font-size: 0.9rem;
+      color: #8b949e;
+    }
+    /* Architecture Showcase Embed */
+    .architecture-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+    }
+    .architecture-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .architecture-header span {
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+    .architecture-header a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .architecture-header a:hover { text-decoration: underline; }
+    .architecture-frame {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+      background: #0b0f19;
+    }
+    /* Runbooks Grid */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .doc-link {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .doc-link:hover {
+      background: #1c2128;
+      border-color: #8b949e;
+    }
+    .doc-title {
+      color: var(--text-bright);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .doc-sub {
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+    /* Summary Spec Table */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .spec-table th, .spec-table td {
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .spec-table th {
+      background: #21262d;
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+    .spec-table tr:last-child td { border-bottom: none; }
+    .code-tag {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      background: rgba(110, 118, 129, 0.2);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>DevOps Infrastructure Platform</h1>
+      <p class="subtitle">Operational Documentation, Architecture & Verification Runbooks</p>
+    </header>
+
+    <!-- Essential Endpoints Section -->
+    <h2 class="section-title">Primary Endpoints</h2>
+    <div class="endpoints-grid">
+      <div class="endpoint-card web">
+        <div>
+          <span class="endpoint-badge badge-web">Production Web</span>
+          <div class="endpoint-title">Web Application</div>
+          <a class="endpoint-url" href="https://web.hasb.dev" target="_blank" rel="noopener noreferrer">https://web.hasb.dev</a>
+          <p class="endpoint-desc">Three.js containerized web application hosted on Web EC2, routed via Cloudflare Anycast edge with DDoS protection and TLS termination.</p>
+        </div>
+      </div>
+
+      <div class="endpoint-card monitoring">
+        <div>
+          <span class="endpoint-badge badge-monitoring">Zero Trust Observability</span>
+          <div class="endpoint-title">Monitoring Dashboard</div>
+          <a class="endpoint-url" href="https://monitoring.hasb.dev" target="_blank" rel="noopener noreferrer">https://monitoring.hasb.dev</a>
+          <p class="endpoint-desc">Grafana dashboard querying Prometheus on the Monitoring EC2, accessed via an outbound Cloudflare Zero Trust Tunnel with zero public inbound ports.</p>
+        </div>
+      </div>
+
+      <div class="endpoint-card repo">
+        <div>
+          <span class="endpoint-badge badge-repo">Version Control</span>
+          <div class="endpoint-title">Public Repository</div>
+          <a class="endpoint-url" href="https://github.com/hasB223/devops-bootcamp-project" target="_blank" rel="noopener noreferrer">https://github.com/hasB223/devops-bootcamp-project</a>
+          <p class="endpoint-desc">Complete Infrastructure-as-Code (Terraform), Ansible automation, Docker packaging, CI/CD workflows, and durable operational runbooks.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture Section -->
+    <h2 class="section-title">End-State Architecture Showcase</h2>
+    <div class="architecture-box">
+      <div class="architecture-header">
+        <span>System Architecture & Network Flow</span>
+        <a href="assets/final-project-end-state.html" target="_blank">Open Full Screen ↗</a>
+      </div>
+      <iframe class="architecture-frame" src="assets/final-project-end-state.html" title="DevOps Infrastructure Architecture"></iframe>
+    </div>
+
+    <!-- Modular Runbooks Directory -->
+    <h2 class="section-title">Durable Operational Runbooks</h2>
+    <div class="docs-grid">
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/terraform.md">
+        <span class="doc-title">Terraform Foundation</span>
+        <span class="doc-sub">VPC networking, EC2 compute, private subnets, security groups, and S3 backend.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/docker.md">
+        <span class="doc-title">Containerization</span>
+        <span class="doc-sub">Multi-stage Dockerfile, image minimization, and local compose verification.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/ansible.md">
+        <span class="doc-title">Ansible Configuration</span>
+        <span class="doc-sub">Multi-play automation, Docker runtime, ECR IAM auth, and idempotency guarantees.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/monitoring.md">
+        <span class="doc-title">Monitoring & Observability</span>
+        <span class="doc-sub">Prometheus metrics collection, node_exporter daemon, and pre-provisioned Grafana.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/cloudflare.md">
+        <span class="doc-title">Domain & Cloudflare Tunnel</span>
+        <span class="doc-sub">DNS A-record proxying, Zero Trust Tunnel setup, and future Terraform IaC path.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/cicd.md">
+        <span class="doc-title">CI/CD Automation</span>
+        <span class="doc-sub">GitHub Actions PR gates, AWS OIDC identity federation, and Pages deployment.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/secrets-management.md">
+        <span class="doc-title">Secrets Management</span>
+        <span class="doc-sub">Infisical Cloud strategy, workload identity, and zero static credentials policy.</span>
+      </a>
+      <a class="doc-link" href="https://github.com/hasB223/devops-bootcamp-project/blob/main/docs/git-workflow.md">
+        <span class="doc-title">Git Standards</span>
+        <span class="doc-sub">Branching conventions, conventional commits, and pull request lifecycle.</span>
+      </a>
+    </div>
+
+    <!-- Infrastructure Specifications -->
+    <h2 class="section-title">Infrastructure Specifications</h2>
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Configuration / Resource</th>
+          <th>Security / Network Placement</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>VPC Network</td>
+          <td><span class="code-tag">10.0.0.0/24</span></td>
+          <td>AWS ap-southeast-1 (Singapore)</td>
+        </tr>
+        <tr>
+          <td>Public Subnet</td>
+          <td><span class="code-tag">10.0.0.0/25</span> (IGW + NAT Gateway)</td>
+          <td>Inbound Port 80 (HTTP) to Web Server</td>
+        </tr>
+        <tr>
+          <td>Private Subnet</td>
+          <td><span class="code-tag">10.0.0.128/25</span> (Route to NAT)</td>
+          <td>Zero public IPs; outbound internet via NAT</td>
+        </tr>
+        <tr>
+          <td>Web Server</td>
+          <td><span class="code-tag">10.0.0.5</span> + Elastic IP</td>
+          <td>Serves web container on port 80; node_exporter on port 9100 (private)</td>
+        </tr>
+        <tr>
+          <td>Ansible Controller</td>
+          <td><span class="code-tag">10.0.0.135</span> (Private Subnet)</td>
+          <td>Manages targets via VPC private network; SSM access only</td>
+        </tr>
+        <tr>
+          <td>Monitoring Server</td>
+          <td><span class="code-tag">10.0.0.136</span> (Private Subnet)</td>
+          <td>Prometheus (:9090) + Grafana (:3000); Cloudflare Tunnel connector</td>
+        </tr>
+        <tr>
+          <td>ECR Registry</td>
+          <td><span class="code-tag">devops-bootcamp/final-project-hasb</span></td>
+          <td>Private AWS container registry; IAM auth on instance profile & GitHub OIDC</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer>
+      DevOps Bootcamp Capstone Platform &middot; Personal Domain: <strong>hasb.dev</strong> &middot; Documentation maintained via GitHub Actions
+    </footer>
+  </div>
+</body>
+</html>

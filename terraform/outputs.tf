@@ -68,3 +68,12 @@ output "ansible_inventory" {
     ansible_ssh_private_key_file=~/.ssh/devops-bootcamp-key
   EOT
 }
+
+# ==============================================================================
+# CI/CD Outputs
+# ==============================================================================
+output "github_actions_role_arn" {
+  description = "IAM Role ARN for GitHub Actions OIDC authentication"
+  value       = aws_iam_role.github_actions.arn
+}
+
