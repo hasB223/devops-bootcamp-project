@@ -257,7 +257,7 @@ The primary continuous cost drivers in this architecture are the **NAT Gateway**
 2. **Destroy NAT Gateway & Associated Elastic IP**:
    ```bash
    cd terraform
-   terraform destroy -target=aws_nat_gateway.nat -target=aws_eip.nat -auto-approve
+   terraform destroy -target=aws_nat_gateway.gw -target=aws_eip.nat -auto-approve
    ```
 
 3. **What Persists vs What is Stopped**:
@@ -267,7 +267,7 @@ The primary continuous cost drivers in this architecture are the **NAT Gateway**
 4. **Resuming from Parked State**:
    ```bash
    cd terraform
-   terraform apply -target=aws_eip.nat -target=aws_nat_gateway.nat -auto-approve
+   terraform apply -target=aws_eip.nat -target=aws_nat_gateway.gw -auto-approve
    aws ec2 start-instances --instance-ids <INSTANCE_IDS>
    ```
 
@@ -298,7 +298,7 @@ When the entire environment is no longer needed:
 
 ### 1. Web Container Fails to Pull Image from ECR
 - **Symptom**: `docker pull` fails on Web EC2 with `no basic auth credentials`.
-- **Cause**: The EC2 instance profile `devops-web-server-profile` lacks `ecr:GetAuthorizationToken` or token expired.
+- **Cause**: The EC2 instance profile `devops-ec2-ssm-profile` lacks `ecr:GetAuthorizationToken` or token expired.
 - **Resolution**: Re-authenticate Docker via the instance role:
   ```bash
   aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 164824552037.dkr.ecr.ap-southeast-1.amazonaws.com

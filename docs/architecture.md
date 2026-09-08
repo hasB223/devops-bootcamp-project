@@ -88,7 +88,7 @@ The network layer is provisioned via Terraform in the AWS Singapore region (`ap-
    - `0.0.0.0/0` -> `aws_internet_gateway.gw` (outbound internet access)
 2. **Private Route Table (`devops-private-rt`)**:
    - `10.0.0.0/24` -> `local` (intra-VPC traffic)
-   - `0.0.0.0/0` -> `aws_nat_gateway.nat` (egress via NAT Gateway in public subnet)
+   - `0.0.0.0/0` -> `aws_nat_gateway.gw` (egress via NAT Gateway in public subnet)
 
 ---
 
@@ -104,7 +104,7 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM arch
   - **Docker Engine**: Installed and managed via official Galaxy role `geerlingguy.docker`.
   - **Web Application Container** (`devops-web-app`): Production Nginx runtime container exposing port 80.
   - **Node Exporter Container** (`node-exporter`): Gathers host system metrics (CPU, memory, disk, network) on port 9100.
-- **IAM Profile**: `devops-web-server-profile` (AWS SSM access + read-only authorization for AWS Private ECR).
+- **IAM Profile**: `devops-ec2-ssm-profile` (AWS SSM access + read-only authorization for AWS Private ECR).
 
 ### 2. Ansible Controller (`10.0.0.135`)
 - **Placement**: Private Subnet (`10.0.0.128/25`).
@@ -123,7 +123,7 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM arch
   - **Prometheus** (`prom/prometheus:v2.53.0`): Scrapes metrics from `10.0.0.5:9100` every 15s; binds internally to port 9090.
   - **Grafana** (`grafana/grafana:11.1.0`): Visualizes metrics on port 3000; pre-configured with declarative Prometheus data source and curated Node Exporter dashboard.
   - **Cloudflare Connector** (`cloudflare/cloudflared:2024.8.3`): Outbound Zero Trust Tunnel daemon connecting to Cloudflare Edge.
-- **IAM Profile**: `devops-monitoring-server-profile` (AWS SSM access).
+- **IAM Profile**: `devops-ec2-ssm-profile` (AWS SSM access).
 
 ---
 
@@ -175,7 +175,7 @@ Traffic entering the platform uses two distinct routing patterns:
 
 | Endpoint | Ingress Pattern | Public Inbound Ports on Host | Origin Security & Encryption |
 | --- | --- | --- | --- |
-| **`web.hasb.dev`** | Cloudflare DNS A-Record (Orange Cloud Proxied) | Port 80 (HTTP) | Cloudflare Anycast edge provides DDoS mitigation and TLS termination (`Full (strict)` or `Flexible`). Origin serves HTTP. |
+| **`web.hasb.dev`** | Cloudflare DNS A-Record (Orange Cloud Proxied) | Port 80 (HTTP) | Cloudflare Anycast edge provides DDoS mitigation and public TLS termination. Current HTTP-only origin uses Flexible mode; Full / Full (strict) only applies after HTTPS is configured on the origin. |
 | **`monitoring.hasb.dev`** | Cloudflare Zero Trust Tunnel (`cloudflared`) | **Zero public ports** | Tunnel connector establishes outbound TLS/QUIC connection to Cloudflare edge. Cloudflare terminates TLS and proxies traffic through the tunnel to `localhost:3000`. |
 
 ---
