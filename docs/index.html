@@ -140,6 +140,58 @@
       display: block;
       background: #0b0f19;
     }
+    /* Live Integration Evidence */
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .evidence-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .evidence-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .evidence-thumb-link {
+      display: block;
+      overflow: hidden;
+      background: #0b0f19;
+    }
+    .evidence-thumb {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+      border-bottom: 1px solid var(--border);
+      transition: opacity 0.15s ease;
+    }
+    .evidence-thumb-link:hover .evidence-thumb {
+      opacity: 0.9;
+    }
+    .evidence-caption {
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .evidence-caption strong {
+      color: var(--text-bright);
+      font-size: 0.95rem;
+    }
+    .evidence-caption span {
+      color: #8b949e;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
     /* Runbooks Grid */
     .docs-grid {
       display: grid;
@@ -257,6 +309,30 @@
         <a href="assets/final-project-end-state.html" target="_blank">Open Full Screen ↗</a>
       </div>
       <iframe class="architecture-frame" src="assets/final-project-end-state.html" title="DevOps Infrastructure Architecture"></iframe>
+    </div>
+
+    <!-- Live Integration Verification -->
+    <h2 class="section-title">Live Integration Verification</h2>
+    <div class="evidence-grid">
+      <div class="evidence-card">
+        <a class="evidence-thumb-link" href="assets/web-app-live.png" target="_blank" rel="noopener noreferrer">
+          <img class="evidence-thumb" src="assets/web-app-live.png" alt="Nebula Runner Three.js web application running live at web.hasb.dev with Cloudflare TLS termination">
+        </a>
+        <div class="evidence-caption">
+          <strong>Production Web Application (web.hasb.dev)</strong>
+          <span>Live Three.js application container served via Nginx with Cloudflare edge TLS termination. Click thumbnail to expand full resolution screenshot.</span>
+        </div>
+      </div>
+
+      <div class="evidence-card">
+        <a class="evidence-thumb-link" href="assets/grafana-dashboard-live.png" target="_blank" rel="noopener noreferrer">
+          <img class="evidence-thumb" src="assets/grafana-dashboard-live.png" alt="Grafana Node Exporter Full dashboard live at monitoring.hasb.dev scraping internal host metrics via Cloudflare Zero Trust Tunnel">
+        </a>
+        <div class="evidence-caption">
+          <strong>Observability Dashboard (monitoring.hasb.dev)</strong>
+          <span>Real-time host metrics scraped from private target 10.0.0.5:9100 visualized in Grafana over Cloudflare Zero Trust Tunnel. Click thumbnail to expand full resolution screenshot.</span>
+        </div>
+      </div>
     </div>
 
     <!-- Modular Runbooks Directory -->
