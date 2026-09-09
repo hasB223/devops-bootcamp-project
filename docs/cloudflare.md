@@ -18,10 +18,13 @@ planes under the personal domain **`hasb.dev`**:
    (`localhost:3000`) on the Monitoring EC2 instance (`10.0.0.136`) via an outbound
    Cloudflare Zero Trust Tunnel (`cloudflared`). The monitoring server has **zero**
    public IP addresses and **zero** public inbound ports open in AWS Security Groups.
-3. **Control Plane vs. Data Plane Separation**: Clarifies the boundary between
+3. **Documentation Portal Entry (`docs.hasb.dev`)**: Routes public traffic to GitHub Pages
+   via a DNS CNAME record pointing to `hasb223.github.io`, consolidating all project
+   documentation, runbooks, and diagrams under the personal domain.
+4. **Control Plane vs. Data Plane Separation**: Clarifies the boundary between
    Cloudflare-side management (DNS, Tunnel registration) and host-level container
    orchestration (Ansible).
-4. **Future IaC Expansion**: Documents how the Cloudflare control plane can be
+5. **Future IaC Expansion**: Documents how the Cloudflare control plane can be
    transitioned from console management into Terraform via the official
    `cloudflare/cloudflare` provider.
 
@@ -249,6 +252,33 @@ The playbook executes:
 2. **Container Pull**: Fetches `cloudflare/cloudflared:2024.8.3`.
 3. **Container Launch**: Deploys `cloudflared` with `network_mode: host` and `restart_policy: unless-stopped`.
 4. **Health Inspection**: Queries the Docker daemon to confirm `cloudflared` is active and running.
+
+---
+
+### Part 4: Cloudflare DNS Setup for Documentation Portal (`docs.hasb.dev`)
+
+1. **Navigate to DNS Management**:
+   ```text
+   Cloudflare Dashboard -> Websites -> hasb.dev -> DNS -> Records
+   ```
+
+2. **Create Documentation Portal CNAME Record**:
+   - Click **Add record**.
+   - **Type**: `CNAME`
+   - **Name**: `docs` (resolves to `docs.hasb.dev`)
+   - **Target**: `hasb223.github.io`
+   - **Proxy status**:
+     - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages hosting/edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
+     - **Proxied (Orange cloud) [Optional Post-Provisioning]**: Routes traffic through Cloudflare's Anycast edge for DDoS protection and Cloudflare edge caching.
+       > [!IMPORTANT]
+       > With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`).
+       > Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
+   - **TTL**: Auto.
+   - Click **Save**.
+
+3. **Domain Binding Source of Truth vs. CNAME Artifact**:
+   - **Active Binding**: The repository Pages custom-domain setting (under repository **Settings** -> **Pages** or managed via GitHub API) is the active binding and source of truth that triggers certificate issuance and domain routing.
+   - **Artifact Manifest**: The repository tracks `docs/CNAME` with content `docs.hasb.dev`. The workflow `.github/workflows/pages.yml` uploads `docs/` as the site artifact, recording the intended custom domain in the deployed artifact to keep configuration aligned in Git. However, for GitHub Actions-based Pages deployment, `docs/CNAME` should not be described as the sole mechanism that binds the domain.
 
 ---
 

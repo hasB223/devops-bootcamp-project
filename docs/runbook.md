@@ -202,7 +202,10 @@ curl -I https://web.hasb.dev
 # 2. Verify Observability Access via Cloudflare Tunnel
 curl -I https://monitoring.hasb.dev
 
-# 3. Verify Documentation Portal on GitHub Pages
+# 3. Verify Documentation Portal on Custom Domain
+curl -I https://docs.hasb.dev
+
+# 3b. Verify Legacy GitHub Pages URL Redirects to Custom Domain
 curl -I https://hasb223.github.io/devops-bootcamp-project/
 
 # 4. Confirm Monitoring Server has zero public inbound ports
@@ -214,7 +217,8 @@ nc -z -w 3 monitoring.hasb.dev 3000 || echo "Port 3000 closed as expected"
 Expected responses:
 - `https://web.hasb.dev`: `HTTP/2 200`
 - `https://monitoring.hasb.dev`: `HTTP/2 200` or `302` (Redirect to Grafana `/login`)
-- `https://hasb223.github.io/devops-bootcamp-project/`: `HTTP/2 200`
+- `https://docs.hasb.dev`: `HTTP/2 200`
+- `https://hasb223.github.io/devops-bootcamp-project/`: `HTTP/2 301` (Redirect to `https://docs.hasb.dev/`)
 
 ### Live Integration Evidence
 

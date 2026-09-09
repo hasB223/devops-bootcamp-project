@@ -75,6 +75,7 @@
     }
     .endpoint-card.web { border-top: 4px solid var(--accent); }
     .endpoint-card.monitoring { border-top: 4px solid var(--accent-green); }
+    .endpoint-card.docs { border-top: 4px solid var(--accent-orange); }
     .endpoint-card.repo { border-top: 4px solid var(--accent-purple); }
     .endpoint-badge {
       display: inline-block;
@@ -88,6 +89,7 @@
     }
     .badge-web { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
     .badge-monitoring { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+    .badge-docs { background: rgba(210, 153, 34, 0.15); color: var(--accent-orange); }
     .badge-repo { background: rgba(188, 140, 255, 0.15); color: var(--accent-purple); }
     .endpoint-title {
       font-size: 1.2rem;
@@ -291,6 +293,15 @@
         </div>
       </div>
 
+      <div class="endpoint-card docs">
+        <div>
+          <span class="endpoint-badge badge-docs">Documentation Portal</span>
+          <div class="endpoint-title">Documentation Portal</div>
+          <a class="endpoint-url" href="https://docs.hasb.dev" target="_blank" rel="noopener noreferrer">https://docs.hasb.dev</a>
+          <p class="endpoint-desc">Comprehensive system architecture, verification runbooks, and interactive network diagrams hosted on GitHub Pages under custom domain.</p>
+        </div>
+      </div>
+
       <div class="endpoint-card repo">
         <div>
           <span class="endpoint-badge badge-repo">Version Control</span>
@@ -430,7 +441,7 @@
     </table>
 
     <footer>
-      DevOps Bootcamp Capstone Platform &middot; Personal Domain: <strong>hasb.dev</strong> &middot; Documentation maintained via GitHub Actions
+      DevOps Bootcamp Capstone Platform &middot; Personal Domain: <strong>hasb.dev</strong> &middot; Documentation hosted at <strong>docs.hasb.dev</strong>
     </footer>
   </div>
 </body>
