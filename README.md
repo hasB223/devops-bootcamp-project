@@ -1,7 +1,7 @@
 # DevOps Infrastructure Platform
 
 [![CI Quality Gate](https://github.com/hasB223/devops-bootcamp-project/actions/workflows/ci.yml/badge.svg)](https://github.com/hasB223/devops-bootcamp-project/actions/workflows/ci.yml)
-[![Documentation Portal](https://github.com/hasB223/devops-bootcamp-project/actions/workflows/pages.yml/badge.svg)](https://hasb223.github.io/devops-bootcamp-project/)
+[![Documentation Portal](https://github.com/hasB223/devops-bootcamp-project/actions/workflows/pages.yml/badge.svg)](https://docs.hasb.dev)
 [![Terraform](https://img.shields.io/badge/Terraform-1.10%2B-844FBA?logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![Ansible](https://img.shields.io/badge/Ansible-2.16%2B-EE0000?logo=ansible&logoColor=white)](https://www.ansible.com/)
 [![Docker](https://img.shields.io/badge/Docker-Engine%20%26%20Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
@@ -17,7 +17,7 @@ A secure, multi-tier cloud infrastructure platform deployed on **Amazon Web Serv
 | **Web Application** | [web.hasb.dev](https://web.hasb.dev) | Three.js containerized frontend hosted on Web EC2 | Cloudflare Anycast edge proxy (DDoS protection, TLS termination) |
 | **Observability Dashboard** | [monitoring.hasb.dev](https://monitoring.hasb.dev) | Grafana monitoring dashboard querying Prometheus | Cloudflare Zero Trust Tunnel (Zero public inbound ports on host) |
 | **Source Repository** | [GitHub Repository](https://github.com/hasB223/devops-bootcamp-project) | Complete Infrastructure as Code, playbooks, and runbooks | Git version control |
-| **Documentation Portal** | [Documentation Portal](https://hasb223.github.io/devops-bootcamp-project/) | Browsable web documentation, runbooks, and diagrams | GitHub Pages |
+| **Documentation Portal** | [docs.hasb.dev](https://docs.hasb.dev) | Browsable web documentation, runbooks, and diagrams | Cloudflare DNS + GitHub Pages |
 
 ---
 
@@ -56,7 +56,7 @@ A secure, multi-tier cloud infrastructure platform deployed on **Amazon Web Serv
 +----------------------------------------------------------------------------+
 ```
 
-An interactive diagram of the network topology and service architecture is available in the [Full Screen Architecture Visualizer](https://hasb223.github.io/devops-bootcamp-project/assets/final-project-end-state.html) or on the [Documentation Portal](https://hasb223.github.io/devops-bootcamp-project/).
+An interactive diagram of the network topology and service architecture is available in the [Full Screen Architecture Visualizer](https://docs.hasb.dev/assets/final-project-end-state.html) or on the [Documentation Portal](https://docs.hasb.dev).
 
 For detailed technical specifications, see [docs/architecture.md](docs/architecture.md).
 

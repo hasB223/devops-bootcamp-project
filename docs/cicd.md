@@ -199,11 +199,13 @@ gh variable set AWS_ROLE_TO_ASSUME --body "$(cd terraform && terraform output -r
 gh variable set ECR_REPOSITORY --body "devops-bootcamp/final-project-hasb"
 ```
 
-### 3. Enable GitHub Pages
+### 3. Enable GitHub Pages & Custom Domain
 
-Configure GitHub Pages to deploy from GitHub Actions:
+Configure GitHub Pages to deploy from GitHub Actions with the branded domain:
 1. In the repository, navigate to **Settings** -> **Pages**.
 2. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
+3. Under **Custom domain**, ensure `docs.hasb.dev` is configured (managed in version control via `docs/CNAME`).
+4. Once DNS verification completes and the TLS certificate is issued, ensure **Enforce HTTPS** is checked.
 
 ---
 
