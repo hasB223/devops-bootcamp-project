@@ -204,7 +204,9 @@ gh variable set ECR_REPOSITORY --body "devops-bootcamp/final-project-hasb"
 Configure GitHub Pages to deploy from GitHub Actions with the branded domain:
 1. In the repository, navigate to **Settings** -> **Pages**.
 2. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
-3. Under **Custom domain**, ensure `docs.hasb.dev` is configured (managed in version control via `docs/CNAME`).
+3. Under **Custom domain**, configure `docs.hasb.dev`.
+   - **Source of Truth**: The repository Pages custom-domain setting (configured via repository Settings or `gh api repos/{owner}/{repo}/pages -f cname="docs.hasb.dev"`) is the active domain binding and certificate trigger.
+   - **Artifact Tracking**: `docs/CNAME` records the intended custom domain in the deployed docs artifact to keep configuration aligned in Git, but for GitHub Actions-based Pages deployment, it should not be described as the sole mechanism that binds the domain.
 4. Once DNS verification completes and the TLS certificate is issued, ensure **Enforce HTTPS** is checked.
 
 ---

@@ -58,10 +58,8 @@ grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('V
 domain_name: "hasb.dev"
 web_subdomain: "web"
 monitoring_subdomain: "monitoring"
-docs_subdomain: "docs"
 web_fqdn: "{{ web_subdomain }}.{{ domain_name }}"
 monitoring_fqdn: "{{ monitoring_subdomain }}.{{ domain_name }}"
-docs_fqdn: "{{ docs_subdomain }}.{{ domain_name }}"
 
 # Cloudflare Tunnel Connector (Monitoring Server: 10.0.0.136)
 cloudflared_image: "cloudflare/cloudflared:2024.8.3"

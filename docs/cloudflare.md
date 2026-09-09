@@ -268,17 +268,17 @@ The playbook executes:
    - **Name**: `docs` (resolves to `docs.hasb.dev`)
    - **Target**: `hasb223.github.io`
    - **Proxy status**:
-     - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages Fastly Anycast edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
+     - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages hosting/edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
      - **Proxied (Orange cloud) [Optional Post-Provisioning]**: Routes traffic through Cloudflare's Anycast edge for DDoS protection and Cloudflare edge caching.
        > [!IMPORTANT]
-       > If switching to **Proxied (Orange cloud)**, the Cloudflare SSL/TLS encryption mode for `docs.hasb.dev` **must** be set to `Full` or `Full (strict)` (e.g. via a Configuration Rule: `Hostname equals docs.hasb.dev -> SSL = Full (strict)`).
-       > Because GitHub Pages only serves HTTPS on port 443 with a valid certificate, setting SSL to `Flexible` for `docs.hasb.dev` will cause infinite redirect loops (`ERR_TOO_MANY_REDIRECTS`) or 522 origin timeouts.
+       > With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`).
+       > Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
    - **TTL**: Auto.
    - Click **Save**.
 
-3. **Repository CNAME Configuration**:
-   - The repository tracks `docs/CNAME` with content `docs.hasb.dev`.
-   - The GitHub Actions workflow `.github/workflows/pages.yml` uploads `docs/` as the site artifact, ensuring GitHub Pages binds `docs.hasb.dev` on every deployment and issues 301 redirects from `hasb223.github.io/devops-bootcamp-project/` to `docs.hasb.dev`.
+3. **Domain Binding Source of Truth vs. CNAME Artifact**:
+   - **Active Binding**: The repository Pages custom-domain setting (under repository **Settings** -> **Pages** or managed via GitHub API) is the active binding and source of truth that triggers certificate issuance and domain routing.
+   - **Artifact Manifest**: The repository tracks `docs/CNAME` with content `docs.hasb.dev`. The workflow `.github/workflows/pages.yml` uploads `docs/` as the site artifact, recording the intended custom domain in the deployed artifact to keep configuration aligned in Git. However, for GitHub Actions-based Pages deployment, `docs/CNAME` should not be described as the sole mechanism that binds the domain.
 
 ---
 
