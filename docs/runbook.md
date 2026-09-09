@@ -216,6 +216,16 @@ Expected responses:
 - `https://monitoring.hasb.dev`: `HTTP/2 200` or `302` (Redirect to Grafana `/login`)
 - `https://hasb223.github.io/devops-bootcamp-project/`: `HTTP/2 200`
 
+### Live Integration Evidence
+
+End-to-end integration verified on live cloud infrastructure:
+
+- **Web Application (`web.hasb.dev`)**: Responsive application UI served by Nginx container with TLS terminated at Cloudflare edge.
+  ![Nebula Runner Web Application Live](assets/web-app-live.png)
+
+- **Observability Dashboard (`monitoring.hasb.dev`)**: Real-time host metrics scraped from `10.0.0.5:9100` and visualized in Grafana over Cloudflare Zero Trust Tunnel.
+  ![Grafana Node Exporter Host Metrics Live](assets/grafana-dashboard-live.png)
+
 ---
 
 ## Two-Path Cost Management & Teardown
