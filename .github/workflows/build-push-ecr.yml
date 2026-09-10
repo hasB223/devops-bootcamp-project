@@ -104,26 +104,26 @@ jobs:
           tag = os.environ['TARGET_TAG']
           print(f'''set -euo pipefail
           ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
-          TARGET_IMAGE=\"\${{ECR_REGISTRY}}/{repo}:{tag}\"
+          TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
 
           echo \"==> Authenticating Docker daemon to ECR...\"
-          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\${{ECR_REGISTRY}}\"
+          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\$ECR_REGISTRY\"
 
-          echo \"==> Pulling target image: \${{TARGET_IMAGE}}...\"
-          docker pull \"\${{TARGET_IMAGE}}\"
+          echo \"==> Pulling target image: \$TARGET_IMAGE...\"
+          docker pull \"\$TARGET_IMAGE\"
 
           echo \"==> Replacing container devops-web-app...\"
           docker stop devops-web-app || true
           docker rm devops-web-app || true
-          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\${{TARGET_IMAGE}}\"
+          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\$TARGET_IMAGE\"
 
           echo \"==> Verifying container health on port 80...\"
           for i in \$(seq 1 10); do
             if curl -s -f http://127.0.0.1:80/ > /dev/null; then
-              echo \"Healthcheck passed on attempt \${{i}}!\"
+              echo \"Healthcheck passed on attempt \$i!\"
               exit 0
             fi
-            echo \"Attempt \${{i}}/10: Container not ready yet. Waiting 2s...\"
+            echo \"Attempt \$i/10: Container not ready yet. Waiting 2s...\"
             sleep 2
           done
 
@@ -209,26 +209,26 @@ jobs:
           tag = os.environ['TARGET_TAG']
           print(f'''set -euo pipefail
           ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
-          TARGET_IMAGE=\"\${{ECR_REGISTRY}}/{repo}:{tag}\"
+          TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
 
           echo \"==> Authenticating Docker daemon to ECR...\"
-          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\${{ECR_REGISTRY}}\"
+          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\$ECR_REGISTRY\"
 
-          echo \"==> Pulling target image: \${{TARGET_IMAGE}}...\"
-          docker pull \"\${{TARGET_IMAGE}}\"
+          echo \"==> Pulling target image: \$TARGET_IMAGE...\"
+          docker pull \"\$TARGET_IMAGE\"
 
           echo \"==> Replacing container devops-web-app...\"
           docker stop devops-web-app || true
           docker rm devops-web-app || true
-          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\${{TARGET_IMAGE}}\"
+          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\$TARGET_IMAGE\"
 
           echo \"==> Verifying container health on port 80...\"
           for i in \$(seq 1 10); do
             if curl -s -f http://127.0.0.1:80/ > /dev/null; then
-              echo \"Healthcheck passed on attempt \${{i}}!\"
+              echo \"Healthcheck passed on attempt \$i!\"
               exit 0
             fi
-            echo \"Attempt \${{i}}/10: Container not ready yet. Waiting 2s...\"
+            echo \"Attempt \$i/10: Container not ready yet. Waiting 2s...\"
             sleep 2
           done
 
