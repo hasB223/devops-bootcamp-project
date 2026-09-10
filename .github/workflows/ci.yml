@@ -42,13 +42,30 @@ jobs:
       - name: Terraform Cloudflare Validate
         run: terraform -chdir=terraform-cloudflare validate
 
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: "v0.55.1"
+
+      - name: TFLint Init
+        run: tflint --init
+
+      - name: TFLint AWS Infrastructure
+        run: tflint --chdir=terraform
+
+      - name: TFLint Cloudflare Infrastructure
+        run: tflint --chdir=terraform-cloudflare
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install Ansible
-        run: pip install ansible
+      - name: Install Ansible & Linters
+        run: pip install ansible yamllint==1.35.1
+
+      - name: Run Yamllint
+        run: yamllint -c .yamllint.yml .github/workflows ansible app/compose.yaml
 
       - name: Install Ansible Roles & Collections
         run: ansible-galaxy install -r ansible/requirements.yml -p ansible/roles
