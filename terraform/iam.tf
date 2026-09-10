@@ -127,26 +127,13 @@ data "aws_iam_policy_document" "controller_ssm_ops" {
   }
 
   statement {
-    sid    = "SSMTransferBucketLocation"
+    sid    = "SSMTransferBucketMetadata"
     effect = "Allow"
     actions = [
-      "s3:GetBucketLocation"
-    ]
-    resources = [aws_s3_bucket.ansible_ssm.arn]
-  }
-
-  statement {
-    sid    = "SSMTransferBucketList"
-    effect = "Allow"
-    actions = [
+      "s3:GetBucketLocation",
       "s3:ListBucket"
     ]
     resources = [aws_s3_bucket.ansible_ssm.arn]
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values   = ["i-*"]
-    }
   }
 
   statement {

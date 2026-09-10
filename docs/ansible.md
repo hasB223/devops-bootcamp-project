@@ -314,12 +314,11 @@ The Ansible Controller role (`devops-controller-role`) is granted scoped permiss
 - `ssm:StartSession`, `ssm:SendCommand` strictly on target instance ARNs and standard SSM documents.
 - `ssm:TerminateSession`, `ssm:ResumeSession`, `ssm:DescribeInstanceInformation` for session lifecycle management.
 - `ssmmessages:CreateControlChannel`, `ssmmessages:CreateDataChannel`, `ssmmessages:OpenControlChannel`, `ssmmessages:OpenDataChannel` on `*` (required by AWS Session Manager client to open WebSocket communication channels).
-- `s3:GetBucketLocation` on the bucket without conditions (as `GetBucketLocation` does not use `s3:prefix`).
-- `s3:ListBucket` with `condition { StringLike = { "s3:prefix" = ["i-*"] } }`.
+- `s3:GetBucketLocation` and `s3:ListBucket` on the bucket ARN (required for `HeadBucket` bucket-level region and accessibility validation by `amazon.aws.aws_ssm`).
 - `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` restricted strictly to `arn:aws:s3:::devops-bootcamp-ansible-ssm-hasb/i-*`.
 
 > [!NOTE]
-> If runtime verification later fails on S3 listing (e.g. if a future collection version issues an unqualified `ListBucket` call before sub-prefix filtering), the condition on `s3:ListBucket` may be adjusted to cover the bucket without weakening object-level `i-*` isolation.
+> `HeadBucket` checks bucket existence and region without passing an `s3:prefix` context key. Object payloads remain strictly isolated under the instance ID prefix `i-*`. In addition, target nodes require `/etc/sudoers.d/ssm-agent-users` granting passwordless sudo to `ssm-user` for privilege escalation.
 
 ### 5. Execution
 ```bash
