@@ -62,7 +62,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Ansible & Linters
-        run: pip install ansible yamllint==1.35.1 ansible-lint==26.8.0
+        run: pip install ansible yamllint==1.38.0 ansible-lint==26.8.0
 
       - name: Run Yamllint
         run: yamllint -c .yamllint.yml .github/workflows ansible app/compose.yaml .ansible-lint
