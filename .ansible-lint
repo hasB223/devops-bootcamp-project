@@ -1,0 +1,10 @@
+---
+# .ansible-lint
+# Configuration for ansible-lint in CI Quality Gate
+
+exclude_paths:
+  - ansible/roles/
+  - .cache/
+
+skip_list:
+  - yaml  # Handled authoritatively in CI by dedicated yamllint step using .yamllint.yml
