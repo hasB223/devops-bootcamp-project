@@ -1,0 +1,24 @@
+# ==============================================================================
+# Ansible SSM Inventory Template (DevOps Bootcamp Capstone - Bonus Track)
+#
+# Connects to EC2 targets using AWS Systems Manager (SSM) transport plugin
+# (amazon.aws.aws_ssm), requiring ZERO inbound SSH port 22 in Security Groups.
+# Target hosts are defined by their EC2 Instance IDs.
+# ==============================================================================
+
+[web]
+web-server ansible_host=i-0128d6c619f0f8684
+
+[monitoring]
+monitoring-server ansible_host=i-0054eda9287d889ff
+
+[targets:children]
+web
+monitoring
+
+[targets:vars]
+ansible_connection=amazon.aws.aws_ssm
+ansible_aws_ssm_region=ap-southeast-1
+ansible_aws_ssm_bucket_name=devops-bootcamp-ansible-ssm-hasb
+ansible_aws_ssm_s3_addressing_style=auto
+ansible_python_interpreter=/usr/bin/python3

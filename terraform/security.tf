@@ -24,13 +24,16 @@ resource "aws_security_group" "public" {
     cidr_blocks = ["${var.monitoring_private_ip}/32"]
   }
 
-  # SSH port 22 from VPC CIDR only
-  ingress {
-    description = "SSH from VPC subnet"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+  # Break-glass SSH port 22 from VPC CIDR (closed by default; Ansible transport uses SSM)
+  dynamic "ingress" {
+    for_each = var.enable_ssh_ingress ? [1] : []
+    content {
+      description = "Break-glass SSH from VPC subnet"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [var.vpc_cidr]
+    }
   }
 
   egress {
@@ -54,13 +57,16 @@ resource "aws_security_group" "private" {
   description = "Security group for private controller and monitoring servers"
   vpc_id      = aws_vpc.main.id
 
-  # SSH port 22 from VPC CIDR only
-  ingress {
-    description = "SSH from VPC subnet"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+  # Break-glass SSH port 22 from VPC CIDR (closed by default; Ansible transport uses SSM)
+  dynamic "ingress" {
+    for_each = var.enable_ssh_ingress ? [1] : []
+    content {
+      description = "Break-glass SSH from VPC subnet"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [var.vpc_cidr]
+    }
   }
 
   # Allow internal traffic between private nodes

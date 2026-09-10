@@ -110,7 +110,7 @@ docker push 164824552037.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/fi
 
 ### Step 3: Ansible Configuration Management
 
-Configuration orchestration is executed strictly from the **Ansible Controller** (`10.0.0.135`) inside the VPC.
+Configuration orchestration is executed strictly from the **Ansible Controller** (`10.0.0.135`) inside the VPC, communicating to targets over AWS Systems Manager (`amazon.aws.aws_ssm`) with zero inbound SSH port 22 in Security Groups.
 
 1. **Connect to Ansible Controller via AWS SSM Session Manager**:
    ```bash
@@ -127,31 +127,49 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    cd ~/devops-bootcamp-project
    ```
 
-3. **Install Ansible Galaxy dependencies**:
+3. **Install Controller Runtime Dependencies & Collections**:
    ```bash
+   # Verify / install AWS session manager plugin
+   which session-manager-plugin || {
+     curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "/tmp/session-manager-plugin.deb"
+     sudo dpkg -i /tmp/session-manager-plugin.deb
+   }
+
+   # Ensure python AWS SDK is installed
+   python3 -c "import boto3, botocore" || pip install boto3 botocore
+
+   # Install Ansible Galaxy dependencies
    ansible-galaxy role install -r ansible/requirements.yml -p ansible/roles
    ansible-galaxy collection install -r ansible/requirements.yml
    ```
 
-4. **Verify internal inventory resolution**:
+4. **Verify inventory resolution (SSM by default, or SSH fallback)**:
    ```bash
-   ansible-inventory -i ansible/inventory.ini --graph
+   # Primary SSM Inventory (targeting EC2 Instance IDs via amazon.aws.aws_ssm)
+   cp ansible/inventory-ssm.ini.example ansible/inventory-ssm.ini
+   ansible-inventory -i ansible/inventory-ssm.ini --graph
+
+   # Test SSM connectivity
+   ansible -i ansible/inventory-ssm.ini targets -m ping
    ```
 
-5. **Execute master playbook**:
+5. **Execute master playbook over SSM**:
    ```bash
    export GRAFANA_ADMIN_PASSWORD="<STRONG_PASSWORD_FROM_INFISICAL>"
    export CLOUDFLARE_TUNNEL_TOKEN="<TUNNEL_TOKEN_FROM_CLOUDFLARE_DASHBOARD>"
 
-   ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+   ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml
    ```
 
 6. **Verify idempotency**:
    Run the playbook a second time:
    ```bash
-   ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+   ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml
    ```
    Confirm the summary returns `changed=0`.
+
+> [!TIP]
+> **Break-Glass SSH Fallback**: If emergency access is ever required, port 22 can be restored by reapplying Terraform with `-var="enable_ssh_ingress=true"`. You can then run using `ansible/inventory.ini`.
 
 ---
 

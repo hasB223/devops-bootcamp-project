@@ -79,6 +79,79 @@ resource "aws_iam_instance_profile" "controller_profile" {
 }
 
 # ==============================================================================
+# Controller SSM & S3 Policy for Ansible Transport over Systems Manager
+# ==============================================================================
+data "aws_iam_policy_document" "controller_ssm_ops" {
+  statement {
+    sid    = "SSMSessionManagerInstances"
+    effect = "Allow"
+    actions = [
+      "ssm:StartSession",
+      "ssm:SendCommand"
+    ]
+    resources = [
+      aws_instance.web.arn,
+      aws_instance.monitoring.arn,
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/*",
+      "arn:aws:ssm:${var.aws_region}::document/*"
+    ]
+  }
+
+  statement {
+    sid    = "SSMSessionTracking"
+    effect = "Allow"
+    actions = [
+      "ssm:TerminateSession",
+      "ssm:ResumeSession",
+      "ssm:GetCommandInvocation",
+      "ssm:ListCommands",
+      "ssm:ListCommandInvocations",
+      "ssm:DescribeInstanceInformation",
+      "ssm:GetConnectionStatus",
+      "ssm:DescribeSessions"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SSMTransferBucketList"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ]
+    resources = [aws_s3_bucket.ansible_ssm.arn]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["i-*"]
+    }
+  }
+
+  statement {
+    sid    = "SSMTransferObjectAccess"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject"
+    ]
+    resources = ["${aws_s3_bucket.ansible_ssm.arn}/i-*"]
+  }
+}
+
+resource "aws_iam_policy" "controller_ssm" {
+  name        = "devops-controller-ssm-policy"
+  description = "Scoped policy allowing Ansible Controller to manage instances via SSM and dedicated S3 relay"
+  policy      = data.aws_iam_policy_document.controller_ssm_ops.json
+}
+
+resource "aws_iam_role_policy_attachment" "controller_ssm" {
+  role       = aws_iam_role.controller_role.name
+  policy_arn = aws_iam_policy.controller_ssm.arn
+}
+
+# ==============================================================================
 # GitHub Actions OIDC Provider & Role for Automated ECR Image Publishing
 # ==============================================================================
 resource "aws_iam_openid_connect_provider" "github" {
