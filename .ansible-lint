@@ -1,0 +1,12 @@
+---
+# .ansible-lint
+# Configuration for ansible-lint in CI Quality Gate
+
+exclude_paths:
+  - ansible/roles/
+  - .cache/
+
+skip_list:
+  - yaml  # Handled authoritatively in CI by dedicated yamllint step using .yamllint.yml
+  - no-changed-when  # Intentional: AWS CLI binary installer (/tmp/aws/install) runs conditionally when aws_cli_check.rc != 0
+  - ignore-errors  # Intentional: ssm-user is dynamically created by AWS SSM agent; group membership task is best-effort
