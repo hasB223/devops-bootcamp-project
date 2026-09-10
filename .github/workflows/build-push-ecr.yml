@@ -8,6 +8,17 @@ on:
       - 'app/**'
       - '.github/workflows/build-push-ecr.yml'
   workflow_dispatch:
+    inputs:
+      auto_deploy:
+        description: 'Deploy container to Web EC2 via AWS SSM (requires running instance)'
+        type: boolean
+        required: false
+        default: false
+      deploy_tag:
+        description: 'Existing ECR image tag to deploy (leave blank to deploy current commit SHA)'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   id-token: write
@@ -17,6 +28,8 @@ jobs:
   build-and-push:
     name: Build & Push ECR Image via OIDC
     runs-on: ubuntu-latest
+    # Skip container build & push when rolling back to an existing image tag
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_tag == ''
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -50,4 +63,218 @@ jobs:
           echo "Successfully pushed container image:"
           echo "  - $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "  - $ECR_REGISTRY/$ECR_REPOSITORY:latest"
-          echo "Note: Host container rollout on Web EC2 is managed independently via Ansible."
+
+  deploy-current:
+    name: Deploy Current Build to Web EC2 via SSM
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag == ''
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Check Web EC2 Status & Deploy via SSM Run Command
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          TARGET_TAG: ${{ github.sha }}
+        run: |
+          echo "==> [1/4] Resolving Web EC2 instance ID for tag Name=web-server..."
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=web-server" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text)
+
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "::warning::Web EC2 instance ('web-server') is not running (fleet parked). Skipping SSM deployment cleanly."
+            exit 0
+          fi
+
+          echo "Found running target instance: $INSTANCE_ID"
+          echo "Deploying target tag: $TARGET_TAG"
+
+          DEPLOY_SCRIPT=$(python3 -c "
+          import os
+          region = os.environ['AWS_REGION']
+          repo = os.environ['ECR_REPOSITORY']
+          tag = os.environ['TARGET_TAG']
+          print(f'''set -euo pipefail
+          ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
+          TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
+
+          echo \"==> Authenticating Docker daemon to ECR...\"
+          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\$ECR_REGISTRY\"
+
+          echo \"==> Pulling target image: \$TARGET_IMAGE...\"
+          docker pull \"\$TARGET_IMAGE\"
+
+          echo \"==> Replacing container devops-web-app...\"
+          docker stop devops-web-app || true
+          docker rm devops-web-app || true
+          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\$TARGET_IMAGE\"
+
+          echo \"==> Verifying container health on port 80...\"
+          for i in \$(seq 1 10); do
+            if curl -s -f http://127.0.0.1:80/ > /dev/null; then
+              echo \"Healthcheck passed on attempt \$i!\"
+              exit 0
+            fi
+            echo \"Attempt \$i/10: Container not ready yet. Waiting 2s...\"
+            sleep 2
+          done
+
+          echo \"Healthcheck failed after 20 seconds.\"
+          exit 1
+          ''')
+          ")
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "$INSTANCE_ID" \
+            --comment "Deploy container tag $TARGET_TAG via GHA run $GITHUB_RUN_ID" \
+            --parameters "$(jq -nc --arg s "$DEPLOY_SCRIPT" '{"commands": [$s]}')" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          echo "==> [3/4] Waiting for SSM command execution to finish..."
+          if ! aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"; then
+            echo "::warning::SSM waiter reported a non-success terminal state. Fetching invocation details..."
+          fi
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" \
+            --output text)
+
+          echo "Command execution finished with status: $STATUS"
+
+          echo "==> [4/4] Fetching command execution output..."
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "StandardOutputContent" \
+            --output text
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::SSM Command failed with status: $STATUS"
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "StandardErrorContent" \
+              --output text
+            exit 1
+          fi
+
+  deploy-existing-tag:
+    name: Deploy Existing Tag to Web EC2 via SSM (Rollback)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag != ''
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Check Web EC2 Status & Deploy via SSM Run Command
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          TARGET_TAG: ${{ github.event.inputs.deploy_tag }}
+        run: |
+          echo "==> [1/4] Resolving Web EC2 instance ID for tag Name=web-server..."
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=web-server" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text)
+
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "::warning::Web EC2 instance ('web-server') is not running (fleet parked). Skipping SSM deployment cleanly."
+            exit 0
+          fi
+
+          echo "Found running target instance: $INSTANCE_ID"
+          echo "Deploying target tag: $TARGET_TAG"
+
+          DEPLOY_SCRIPT=$(python3 -c "
+          import os
+          region = os.environ['AWS_REGION']
+          repo = os.environ['ECR_REPOSITORY']
+          tag = os.environ['TARGET_TAG']
+          print(f'''set -euo pipefail
+          ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
+          TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
+
+          echo \"==> Authenticating Docker daemon to ECR...\"
+          aws ecr get-login-password --region \"{region}\" | docker login --username AWS --password-stdin \"\$ECR_REGISTRY\"
+
+          echo \"==> Pulling target image: \$TARGET_IMAGE...\"
+          docker pull \"\$TARGET_IMAGE\"
+
+          echo \"==> Replacing container devops-web-app...\"
+          docker stop devops-web-app || true
+          docker rm devops-web-app || true
+          docker run -d --name devops-web-app --restart unless-stopped -p 80:80 \"\$TARGET_IMAGE\"
+
+          echo \"==> Verifying container health on port 80...\"
+          for i in \$(seq 1 10); do
+            if curl -s -f http://127.0.0.1:80/ > /dev/null; then
+              echo \"Healthcheck passed on attempt \$i!\"
+              exit 0
+            fi
+            echo \"Attempt \$i/10: Container not ready yet. Waiting 2s...\"
+            sleep 2
+          done
+
+          echo \"Healthcheck failed after 20 seconds.\"
+          exit 1
+          ''')
+          ")
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "$INSTANCE_ID" \
+            --comment "Deploy container tag $TARGET_TAG via GHA run $GITHUB_RUN_ID" \
+            --parameters "$(jq -nc --arg s "$DEPLOY_SCRIPT" '{"commands": [$s]}')" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          echo "==> [3/4] Waiting for SSM command execution to finish..."
+          if ! aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"; then
+            echo "::warning::SSM waiter reported a non-success terminal state. Fetching invocation details..."
+          fi
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" \
+            --output text)
+
+          echo "Command execution finished with status: $STATUS"
+
+          echo "==> [4/4] Fetching command execution output..."
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "StandardOutputContent" \
+            --output text
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::SSM Command failed with status: $STATUS"
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "StandardErrorContent" \
+              --output text
+            exit 1
+          fi
