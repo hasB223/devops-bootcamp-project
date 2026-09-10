@@ -114,11 +114,32 @@ data "aws_iam_policy_document" "controller_ssm_ops" {
   }
 
   statement {
+    sid    = "SSMSessionDataChannel"
+    effect = "Allow"
+    actions = [
+      "ssmmessages:CreateControlChannel",
+      "ssmmessages:CreateDataChannel",
+      "ssmmessages:OpenControlChannel",
+      "ssmmessages:OpenDataChannel"
+    ]
+    # Note: AWS Session Manager data-channel actions (ssmmessages) do not support resource-level ARNs
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SSMTransferBucketLocation"
+    effect = "Allow"
+    actions = [
+      "s3:GetBucketLocation"
+    ]
+    resources = [aws_s3_bucket.ansible_ssm.arn]
+  }
+
+  statement {
     sid    = "SSMTransferBucketList"
     effect = "Allow"
     actions = [
-      "s3:ListBucket",
-      "s3:GetBucketLocation"
+      "s3:ListBucket"
     ]
     resources = [aws_s3_bucket.ansible_ssm.arn]
     condition {

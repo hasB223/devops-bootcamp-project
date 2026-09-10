@@ -313,6 +313,8 @@ ansible_python_interpreter=/usr/bin/python3
 The Ansible Controller role (`devops-controller-role`) is granted scoped permissions:
 - `ssm:StartSession`, `ssm:SendCommand` strictly on target instance ARNs and standard SSM documents.
 - `ssm:TerminateSession`, `ssm:ResumeSession`, `ssm:DescribeInstanceInformation` for session lifecycle management.
+- `ssmmessages:CreateControlChannel`, `ssmmessages:CreateDataChannel`, `ssmmessages:OpenControlChannel`, `ssmmessages:OpenDataChannel` on `*` (required by AWS Session Manager client to open WebSocket communication channels).
+- `s3:GetBucketLocation` on the bucket without conditions (as `GetBucketLocation` does not use `s3:prefix`).
 - `s3:ListBucket` with `condition { StringLike = { "s3:prefix" = ["i-*"] } }`.
 - `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` restricted strictly to `arn:aws:s3:::devops-bootcamp-ansible-ssm-hasb/i-*`.
 
