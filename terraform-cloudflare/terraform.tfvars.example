@@ -1,0 +1,5 @@
+cloudflare_account_id = "<cloudflare_account_id>"
+cloudflare_zone_id    = "<cloudflare_zone_id>"
+domain_name           = "hasb.dev"
+web_origin_ipv4       = "18.142.89.74"
+
