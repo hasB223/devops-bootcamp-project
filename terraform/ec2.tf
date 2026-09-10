@@ -39,7 +39,7 @@ resource "aws_instance" "web" {
   key_name             = var.key_name
   subnet_id            = aws_subnet.public.id
   private_ip           = var.web_private_ip
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+  iam_instance_profile = aws_iam_instance_profile.web_profile.name
 
   vpc_security_group_ids = [
     aws_security_group.public.id
@@ -108,7 +108,7 @@ resource "aws_instance" "monitoring" {
   key_name             = var.key_name
   subnet_id            = aws_subnet.private.id
   private_ip           = var.monitoring_private_ip
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+  iam_instance_profile = aws_iam_instance_profile.monitoring_profile.name
 
   vpc_security_group_ids = [
     aws_security_group.private.id
