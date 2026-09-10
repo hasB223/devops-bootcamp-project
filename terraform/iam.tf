@@ -165,3 +165,51 @@ resource "aws_iam_role_policy_attachment" "github_actions_ecr" {
   policy_arn = aws_iam_policy.github_actions_ecr.arn
 }
 
+# ==============================================================================
+# GitHub Actions Policy for Automated SSM Deployment to Web EC2
+# ==============================================================================
+data "aws_iam_policy_document" "github_actions_ssm_deploy" {
+  statement {
+    sid       = "EC2DescribeInstancesForDeployment"
+    effect    = "Allow"
+    actions   = ["ec2:DescribeInstances"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SSMSendCommandToWebInstance"
+    effect = "Allow"
+    actions = [
+      "ssm:SendCommand"
+    ]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/AWS-RunShellScript",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript",
+      aws_instance.web.arn
+    ]
+  }
+
+  statement {
+    sid    = "SSMCommandInvocationTracking"
+    effect = "Allow"
+    actions = [
+      "ssm:GetCommandInvocation",
+      "ssm:ListCommands",
+      "ssm:ListCommandInvocations",
+      "ssm:DescribeInstanceInformation"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_ssm" {
+  name        = "devops-github-actions-ssm-policy"
+  description = "Scoped policy allowing GitHub Actions OIDC workflow to deploy container updates to Web EC2 via SSM"
+  policy      = data.aws_iam_policy_document.github_actions_ssm_deploy.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_ssm" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_ssm.arn
+}
+
