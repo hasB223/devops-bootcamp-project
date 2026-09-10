@@ -68,10 +68,15 @@ jobs:
         run: yamllint -c .yamllint.yml .github/workflows ansible app/compose.yaml
 
       - name: Install Ansible Roles & Collections
-        run: ansible-galaxy install -r ansible/requirements.yml -p ansible/roles
+        run: |
+          ansible-galaxy role install -r ansible/requirements.yml -p ansible/roles
+          ansible-galaxy collection install -r ansible/requirements.yml
 
-      - name: Ansible Playbook Syntax Check
+      - name: Ansible Playbook Syntax Check (SSH Baseline)
         run: ansible-playbook --syntax-check -i ansible/inventory.ini.example ansible/playbook.yml
+
+      - name: Ansible Playbook Syntax Check (SSM Transport)
+        run: ansible-playbook --syntax-check -i ansible/inventory-ssm.ini.example ansible/playbook.yml
 
   app-build:
     name: Frontend App Build Check

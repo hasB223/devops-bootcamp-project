@@ -70,10 +70,58 @@ output "ansible_inventory" {
 }
 
 # ==============================================================================
+# Compute Instance IDs (for SSM Targeting)
+# ==============================================================================
+output "web_instance_id" {
+  description = "EC2 Instance ID of the Web Server"
+  value       = aws_instance.web.id
+}
+
+output "monitoring_instance_id" {
+  description = "EC2 Instance ID of the Monitoring Server"
+  value       = aws_instance.monitoring.id
+}
+
+output "controller_instance_id" {
+  description = "EC2 Instance ID of the Ansible Controller"
+  value       = aws_instance.controller.id
+}
+
+output "ansible_ssm_bucket_name" {
+  description = "Dedicated S3 bucket for Ansible SSM transport relay"
+  value       = aws_s3_bucket.ansible_ssm.bucket
+}
+
+# ==============================================================================
 # CI/CD Outputs
 # ==============================================================================
 output "github_actions_role_arn" {
   description = "IAM Role ARN for GitHub Actions OIDC authentication"
   value       = aws_iam_role.github_actions.arn
+}
+
+# ==============================================================================
+# Ansible SSM Inventory Output
+# ==============================================================================
+output "ansible_ssm_inventory" {
+  description = "Generated SSM inventory content for Ansible controller"
+  value       = <<-EOT
+    [web]
+    web-server ansible_host=${aws_instance.web.id}
+
+    [monitoring]
+    monitoring-server ansible_host=${aws_instance.monitoring.id}
+
+    [targets:children]
+    web
+    monitoring
+
+    [targets:vars]
+    ansible_connection=amazon.aws.aws_ssm
+    ansible_aws_ssm_region=${var.aws_region}
+    ansible_aws_ssm_bucket_name=${aws_s3_bucket.ansible_ssm.bucket}
+    ansible_aws_ssm_s3_addressing_style=auto
+    ansible_python_interpreter=/usr/bin/python3
+  EOT
 }
 

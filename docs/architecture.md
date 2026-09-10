@@ -61,7 +61,7 @@ The platform delivers a secure, containerized web application alongside an isola
           |   |  | (No Public IP)      |             |  (No Public IP)      |  |   |
           |   |  |                     |             |                      |  |   |
           |   |  | - Ansible Playbook  |             | - Prometheus (:9090) |  |   |
-          |   |  | - SSH to targets    |             | - Grafana (:3000)    |  |   |
+          |   |  | - SSM Transport     |             | - Grafana (:3000)    |  |   |
           |   |  | - SSM Session Only  |             | - cloudflared Daemon |  |   |
           |   |  +---------------------+             +----------------------+  |   |
           |   +----------------------------------------------------------------+   |
@@ -141,7 +141,8 @@ Security groups enforce least-privilege traffic flow across instances:
 | (web-server-sg)  | <---------------------------------- | (monitoring-server)  |
 +------------------+        Prometheus Scrape Request    +----------------------+
      ^                                                             ^
-     |                     SSH (Port 22)                           |
+     |              AWS Systems Manager / HTTPS 443                |
+     |                  (Zero Port 22 Inbound)                     |
      +-------------------------------------------------------------+
                                    |
                        +-----------------------+
@@ -159,10 +160,13 @@ Security groups enforce least-privilege traffic flow across instances:
 | --- | --- | --- | --- |
 | **`web-server-sg`** | `0.0.0.0/0` | Port 80 (TCP) | Public HTTP traffic routed from Cloudflare edge proxy |
 | **`web-server-sg`** | `10.0.0.136/32` (Monitoring Server) | Port 9100 (TCP) | Allows Prometheus to scrape host node_exporter metrics |
-| **`web-server-sg`** | `10.0.0.135/32` (Controller) | Port 22 (TCP) | Internal SSH configuration management from Controller |
-| **`monitoring-server-sg`** | `10.0.0.135/32` (Controller) | Port 22 (TCP) | Internal SSH configuration management from Controller |
+| **`web-server-sg`** | None by default (or `10.0.0.0/24` if break-glass enabled) | Port 22 (TCP) | **Closed by default** (`enable_ssh_ingress = false`). Ansible uses `amazon.aws.aws_ssm` over HTTPS 443 |
+| **`monitoring-server-sg`** | None by default (or `10.0.0.0/24` if break-glass enabled) | Port 22 (TCP) | **Closed by default** (`enable_ssh_ingress = false`). Ansible uses `amazon.aws.aws_ssm` over HTTPS 443 |
 | **`monitoring-server-sg`** | `10.0.0.136/32` (Self) | Ports 3000, 9090 (TCP) | Inter-container metrics flow and local tunnel ingress |
 | **`controller-sg`** | None (Zero inbound rules) | None | Controller accepts no inbound connections; access is SSM-only |
+
+> [!NOTE]
+> **Evolution from Baseline**: In the baseline implementation, the Controller connected to targets over internal VPC SSH (port 22). Under the **Ansible over SSM (+3%)** bonus track, all management was migrated to the `amazon.aws.aws_ssm` transport plugin, completely removing port 22 inbound rules in the default state. Emergency break-glass SSH can be temporarily restored by deploying with `-var="enable_ssh_ingress=true"`.
 
 ### Security Group Egress Rules
 - All security groups allow outbound traffic (`0.0.0.0/0`) for package updates, container image pulls from ECR, and outbound Cloudflare tunnel traffic via the NAT Gateway or Internet Gateway.

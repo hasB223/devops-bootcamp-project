@@ -63,3 +63,9 @@ variable "key_name" {
   type        = string
   default     = "has-dev-t14g2-wsl-keypair"
 }
+
+variable "enable_ssh_ingress" {
+  description = "Enable break-glass SSH port 22 ingress from VPC CIDR into security groups"
+  type        = bool
+  default     = false
+}

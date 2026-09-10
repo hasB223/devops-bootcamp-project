@@ -12,7 +12,8 @@ This layer automates server provisioning, container runtime setup, and applicati
 - **Private ECR Integration**: Authenticates to AWS Elastic Container Registry (ECR) using EC2 IAM instance profile credentials (no hardcoded static keys).
 - **Application Deployment**: Pulls the multi-stage Three.js web application image from ECR and runs it as a daemonized container with port 80 exposed.
 - **Idempotency Guarantee**: All tasks and plays converge to a steady state such that consecutive playbook runs yield `changed=0`.
-- **Zero Inbound SSH from Internet**: Inter-node management takes place strictly across the internal VPC network (`10.0.0.0/24`). Controller access from the outside is mediated via AWS Systems Manager (SSM) Session Manager.
+- **Zero Inbound SSH (Ansible over SSM)**: Inter-node configuration management uses the AWS Systems Manager transport plugin (`amazon.aws.aws_ssm`), completely eliminating the need for inbound SSH port 22 in Security Groups. Workstation access to the Controller is mediated via SSM Session Manager.
+- **Break-Glass SSH Capability**: A Terraform variable (`enable_ssh_ingress`, default `false`) provides break-glass VPC SSH ingress if ever required for emergency recovery.
 
 ---
 
@@ -31,10 +32,16 @@ This layer automates server provisioning, container runtime setup, and applicati
                                   |     Ansible Controller (Private)      |
                                   |             10.0.0.135                |
                                   +---------------------------------------+
+                                            |                  |
+                       HTTPS 443 (SSM)      |                  |   HTTPS 443 (SSM)
+                       No port 22 required  |                  |   No port 22 required
+                                            v                  v
+                               +------------------------------------+
+                               |     AWS Systems Manager API /      |
+                               |      S3 Relay VPC Endpoint         |
+                               +------------------------------------+
                                             /                  \
-                       SSH (port 22)       /                    \   SSH (port 22)
-                       Internal VPC CIDR  /                      \  Internal VPC CIDR
-                                         v                        v
+                                           v                    v
             +------------------------------------+    +------------------------------------+
             |        Web Server (Public)         |    |     Monitoring Server (Private)    |
             |             10.0.0.5               |    |             10.0.0.136             |
@@ -43,6 +50,9 @@ This layer automates server provisioning, container runtime setup, and applicati
             |  - IAM Profile: ECR ReadOnly       |    |  - IAM Profile: SSM Managed        |
             +------------------------------------+    +------------------------------------+
 ```
+
+> [!NOTE]
+> **Evolution from Baseline**: The capstone baseline initially utilized internal VPC SSH (`port 22`) from the Ansible Controller. Under the **Ansible over SSM (+3%)** track, transport was upgraded to `amazon.aws.aws_ssm` over encrypted AWS SSM HTTPS endpoints, allowing port 22 to be closed by default in all security groups.
 
 ---
 
@@ -53,8 +63,9 @@ All configuration assets reside in `ansible/`:
 ```text
 ansible/
 ├── ansible.cfg              # Ansible defaults: inventory, SSH optimization, role paths
-├── requirements.yml         # Galaxy dependencies (geerlingguy.docker, community.docker)
-├── inventory.ini.example    # Tracked reference inventory specifying internal VPC hosts
+├── requirements.yml         # Galaxy dependencies (geerlingguy.docker, community.docker, amazon.aws)
+├── inventory.ini.example    # Tracked reference inventory specifying internal VPC hosts (SSH fallback)
+├── inventory-ssm.ini.example # Tracked SSM inventory targeting EC2 Instance IDs via amazon.aws.aws_ssm
 ├── inventory.ini            # Live inventory file (gitignored to avoid committing dynamic state)
 ├── group_vars/
 │   └── all.yml              # Global variables (AWS region, ECR URIs, container definitions)
@@ -249,19 +260,75 @@ Connection: keep-alive
 
 ## Bonus: Ansible without Port 22 (AWS Systems Manager Plugin)
 
-To satisfy the +3% bonus for running Ansible without port 22 open:
-1. Install AWS SSM collection:
-   ```bash
-   ansible-galaxy collection install community.aws
-   ```
-2. In `inventory.ini`, update connection variables:
-   ```ini
-   [targets:vars]
-   ansible_connection=aws_ssm
-   ansible_aws_ssm_region=ap-southeast-1
-   ansible_aws_ssm_bucket_name=devops-bootcamp-terraform-hasb
-   ```
-3. Remove port 22 inbound rules from `devops-public-sg` and `devops-private-sg`. All commands execute over encrypted HTTPS to AWS SSM endpoints.
+To satisfy the **+3% bonus** for running Ansible without port 22 open:
+
+### 1. Transport Architecture
+Ansible uses the official `amazon.aws.aws_ssm` connection plugin to execute tasks and modules via AWS Systems Manager Session Manager WebSocket connections (`ssm:StartSession`, `ssm:TerminateSession`) over HTTPS 443:
+- **Zero Port 22 Ingress**: Port 22 is completely closed by default in `devops-public-sg` and `devops-private-sg`.
+- **Dedicated S3 Transit Relay**: A dedicated bucket (`devops-bootcamp-ansible-ssm-hasb`) is provisioned with versioning explicitly suspended and a 1-day lifecycle purge rule.
+- **S3 VPC Gateway Endpoint**: An `aws_vpc_endpoint.s3` gateway endpoint routes all S3 traffic across the private AWS network at zero cost ($0.00/mo), bypassing NAT data transfer fees.
+- **Break-Glass SSH Capability**: A Terraform variable (`enable_ssh_ingress`, default `false`) provides dynamic port 22 restoration for emergency administrative recovery:
+  ```bash
+  terraform -chdir=terraform apply -var="enable_ssh_ingress=true"
+  ```
+
+### 2. Controller Runtime Prerequisites
+On the Ansible Controller (`ansible-controller`, Ubuntu 24.04 LTS):
+```bash
+# 1. Install AWS Session Manager Plugin
+which session-manager-plugin || {
+  curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "/tmp/session-manager-plugin.deb"
+  sudo dpkg -i /tmp/session-manager-plugin.deb
+}
+
+# 2. Install Python AWS SDK
+python3 -c "import boto3, botocore" || pip install boto3 botocore
+
+# 3. Install Ansible AWS Collection
+ansible-galaxy collection install -r requirements.yml
+```
+
+### 3. Inventory Configuration (`inventory-ssm.ini`)
+Target EC2 instances using their Instance IDs:
+```ini
+[web]
+web-server ansible_host=i-0128d6c619f0f8684
+
+[monitoring]
+monitoring-server ansible_host=i-0054eda9287d889ff
+
+[targets:children]
+web
+monitoring
+
+[targets:vars]
+ansible_connection=amazon.aws.aws_ssm
+ansible_aws_ssm_region=ap-southeast-1
+ansible_aws_ssm_bucket_name=devops-bootcamp-ansible-ssm-hasb
+ansible_aws_ssm_s3_addressing_style=auto
+ansible_python_interpreter=/usr/bin/python3
+```
+
+### 4. IAM Scoping & Prefix Isolation
+The Ansible Controller role (`devops-controller-role`) is granted scoped permissions:
+- `ssm:StartSession`, `ssm:SendCommand` strictly on target instance ARNs and standard SSM documents.
+- `ssm:TerminateSession`, `ssm:ResumeSession`, `ssm:DescribeInstanceInformation` for session lifecycle management.
+- `ssmmessages:CreateControlChannel`, `ssmmessages:CreateDataChannel`, `ssmmessages:OpenControlChannel`, `ssmmessages:OpenDataChannel` on `*` (required by AWS Session Manager client to open WebSocket communication channels).
+- `s3:GetBucketLocation` on the bucket without conditions (as `GetBucketLocation` does not use `s3:prefix`).
+- `s3:ListBucket` with `condition { StringLike = { "s3:prefix" = ["i-*"] } }`.
+- `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` restricted strictly to `arn:aws:s3:::devops-bootcamp-ansible-ssm-hasb/i-*`.
+
+> [!NOTE]
+> If runtime verification later fails on S3 listing (e.g. if a future collection version issues an unqualified `ListBucket` call before sub-prefix filtering), the condition on `s3:ListBucket` may be adjusted to cover the bucket without weakening object-level `i-*` isolation.
+
+### 5. Execution
+```bash
+# Test connectivity via SSM ad-hoc ping
+ansible -i inventory-ssm.ini targets -m ping
+
+# Execute configuration playbook over SSM
+ansible-playbook -i inventory-ssm.ini playbook.yml
+```
 
 ---
 
