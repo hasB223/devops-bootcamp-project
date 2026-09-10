@@ -8,6 +8,7 @@ on:
     branches:
       - 'feature/**'
       - 'fix/**'
+      - 'chore/**'
   workflow_dispatch:
 
 jobs:
@@ -23,14 +24,23 @@ jobs:
         with:
           terraform_version: "1.10.5"
 
-      - name: Terraform Init (Backendless)
+      - name: Terraform AWS Init (Backendless)
         run: terraform -chdir=terraform init -backend=false
 
-      - name: Terraform Format Check
+      - name: Terraform AWS Format Check
         run: terraform -chdir=terraform fmt -check
 
-      - name: Terraform Validate
+      - name: Terraform AWS Validate
         run: terraform -chdir=terraform validate
+
+      - name: Terraform Cloudflare Init (Backendless)
+        run: terraform -chdir=terraform-cloudflare init -backend=false
+
+      - name: Terraform Cloudflare Format Check
+        run: terraform -chdir=terraform-cloudflare fmt -check
+
+      - name: Terraform Cloudflare Validate
+        run: terraform -chdir=terraform-cloudflare validate
 
       - name: Set up Python
         uses: actions/setup-python@v5
