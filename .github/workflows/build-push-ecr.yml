@@ -102,7 +102,7 @@ jobs:
           region = os.environ['AWS_REGION']
           repo = os.environ['ECR_REPOSITORY']
           tag = os.environ['TARGET_TAG']
-          print(f'''set -euo pipefail
+          print(f'''set -eu
           ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
           TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
 
@@ -209,7 +209,7 @@ jobs:
           region = os.environ['AWS_REGION']
           repo = os.environ['ECR_REPOSITORY']
           tag = os.environ['TARGET_TAG']
-          print(f'''set -euo pipefail
+          print(f'''set -eu
           ECR_REGISTRY=\"\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.{region}.amazonaws.com\"
           TARGET_IMAGE=\"\$ECR_REGISTRY/{repo}:{tag}\"
 
