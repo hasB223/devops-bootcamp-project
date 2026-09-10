@@ -288,7 +288,7 @@ The Cloudflare control plane is managed declaratively via a dedicated, decoupled
 
 ### Architectural Decoupling & State Isolation
 
-1. **Independent Lifecycle**: `terraform-cloudflare/` is isolated from the AWS infrastructure root (`terraform/`). Managing DNS or Zero Trust routing never triggers AWS resource churn or requires AWS IAM credentials.
+1. **Independent Lifecycle**: `terraform-cloudflare/` is isolated from the AWS infrastructure root (`terraform/`). It does not define an AWS provider and does not manage or modify AWS resources. However, it still requires standard AWS credentials (e.g. AWS CLI profile, environment variables, or IAM role) to read and write state to the Amazon S3 remote backend.
 2. **Dedicated S3 State**: State is preserved in the S3 bucket `devops-bootcamp-terraform-hasb` under key `cloudflare/terraform.tfstate` in `ap-southeast-1`.
 3. **Zero-Secret State Policy**:
    - `CLOUDFLARE_API_TOKEN` is injected at runtime via Infisical (`infisical run --env=dev --path=/terraform-cloudflare -- ...`). It is never stored in HCL, `terraform.tfvars`, or Git.
@@ -321,7 +321,7 @@ terraform {
 provider "cloudflare" {}
 ```
 
-#### Variables & Non-Secret Values (`terraform-cloudflare/variables.tf` & `terraform.tfvars.example`)
+#### Variables (`terraform-cloudflare/variables.tf`)
 ```hcl
 variable "cloudflare_account_id" {
   description = "Cloudflare Account ID (non-secret)"
@@ -362,6 +362,14 @@ variable "web_origin_ipv4" {
   type        = string
   default     = "18.142.89.74"
 }
+```
+
+#### Variable Template (`terraform-cloudflare/terraform.tfvars.example`)
+```hcl
+cloudflare_account_id = "<cloudflare_account_id>"
+cloudflare_zone_id    = "<cloudflare_zone_id>"
+domain_name           = "hasb.dev"
+web_origin_ipv4       = "18.142.89.74"
 ```
 
 #### Zero Trust Tunnel (`terraform-cloudflare/tunnel.tf`)
@@ -425,13 +433,34 @@ resource "cloudflare_dns_record" "docs" {
 
 ### Import and Operation Workflow
 
+#### Prerequisites
+1. **Configure Non-Secret Variables**:
+   Create `terraform-cloudflare/terraform.tfvars` from the template:
+   ```bash
+   cp terraform-cloudflare/terraform.tfvars.example terraform-cloudflare/terraform.tfvars
+   ```
+   Populate your non-secret `cloudflare_account_id` and `cloudflare_zone_id` values (or supply them via `TF_VAR_cloudflare_account_id` and `TF_VAR_cloudflare_zone_id` environment variables).
+2. **Confirm Git Isolation**:
+   Verify that `terraform-cloudflare/terraform.tfvars` remains ignored by Git:
+   ```bash
+   git check-ignore terraform-cloudflare/terraform.tfvars
+   ```
+   This ensures local identifiers and configuration files are never committed to version control.
+3. **AWS S3 Backend Credentials**:
+   Ensure active AWS credentials (e.g. via `aws configure` or environment variables) with read/write access to the remote state bucket `devops-bootcamp-terraform-hasb`.
+
+#### Workflow Execution
 To run operations safely without secret leakage:
 
 ```bash
 # 1. Initialize Terraform
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare init
 
-# 2. Resource Imports (Existing Infrastructure)
+# 2. Preflight Code Validation
+terraform -chdir=terraform-cloudflare fmt -check
+terraform -chdir=terraform-cloudflare validate
+
+# 3. Resource Imports (Existing Infrastructure)
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
   import cloudflare_zero_trust_tunnel_cloudflared.monitoring <ACCOUNT_ID>/<TUNNEL_ID>
 
@@ -447,7 +476,7 @@ infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terrafo
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
   import cloudflare_dns_record.docs <ZONE_ID>/<RECORD_ID_DOCS>
 
-# 3. Plan Verification (0 changes / 0 drift)
+# 4. Plan Verification (0 changes / 0 drift)
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare plan
 ```
 
