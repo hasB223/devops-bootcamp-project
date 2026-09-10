@@ -282,72 +282,104 @@ The playbook executes:
 
 ---
 
-## Future IaC Expansion: Cloudflare Terraform Provider
+## Infrastructure as Code: Cloudflare Terraform Root (`terraform-cloudflare/`)
 
-While the baseline uses Cloudflare Console for control-plane configuration to
-maintain decoupling and avoid upfront API token bootstrapping, the control plane
-is designed to be managed via Terraform in a later expansion.
+The Cloudflare control plane is managed declaratively via a dedicated, decoupled Terraform root module located at `terraform-cloudflare/` using the official **Cloudflare Terraform Provider v5 (`~> 5.0`)**.
 
-### Provider Declaration
+### Architectural Decoupling & State Isolation
 
-> [!NOTE]
-> Syntax below is verified against **Cloudflare Terraform Provider v5** (`~> 5.0`, latest `5.24.0`).
-> In provider v5, resource names, tunnel attributes, and config structures differ significantly
-> from legacy v4 (e.g. `cloudflare_dns_record` replaces `cloudflare_record`, `tunnel_secret`
-> replaces `secret`, and `cloudflare_zero_trust_tunnel_cloudflared_token` data source provides
-> the connector token).
+1. **Independent Lifecycle**: `terraform-cloudflare/` is isolated from the AWS infrastructure root (`terraform/`). Managing DNS or Zero Trust routing never triggers AWS resource churn or requires AWS IAM credentials.
+2. **Dedicated S3 State**: State is preserved in the S3 bucket `devops-bootcamp-terraform-hasb` under key `cloudflare/terraform.tfstate` in `ap-southeast-1`.
+3. **Zero-Secret State Policy**:
+   - `CLOUDFLARE_API_TOKEN` is injected at runtime via Infisical (`infisical run --env=dev --path=/terraform-cloudflare -- ...`). It is never stored in HCL, `terraform.tfvars`, or Git.
+   - For remotely managed tunnels (`config_src = "cloudflare"`), `tunnel_secret` is omitted.
+   - Tunnel connector tokens live strictly in Infisical path `/ansible/CLOUDFLARE_TUNNEL_TOKEN` for Ansible host orchestration. No sensitive connector tokens are stored in Terraform state.
+4. **Manual Dependency: Edge SSL Configuration Rule**:
+   - The scoped `CLOUDFLARE_API_TOKEN` has permissions for Zone DNS and Account Tunnel, not Zone Rulesets.
+   - The Cloudflare Configuration Rule (`Hostname equals web.hasb.dev` -> `SSL = Flexible`) remains a documented manual dependency configured via the Cloudflare Dashboard. The Web EC2 origin serves HTTP on port 80, while `docs.hasb.dev` uses strict HTTPS.
 
+### Module Configuration
+
+#### Providers (`terraform-cloudflare/providers.tf`)
 ```hcl
-# terraform/cloudflare.tf (or a dedicated root module terraform-cloudflare/)
 terraform {
+  required_version = ">= 1.10"
   required_providers {
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 5.0"
     }
   }
+  backend "s3" {
+    bucket = "devops-bootcamp-terraform-hasb"
+    key    = "cloudflare/terraform.tfstate"
+    region = "ap-southeast-1"
+  }
 }
 
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
+# Authenticates automatically via CLOUDFLARE_API_TOKEN environment variable
+provider "cloudflare" {}
+```
+
+#### Variables & Non-Secret Values (`terraform-cloudflare/variables.tf` & `terraform.tfvars.example`)
+```hcl
+variable "cloudflare_account_id" {
+  description = "Cloudflare Account ID (non-secret)"
+  type        = string
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID for hasb.dev (non-secret)"
+  type        = string
+}
+
+variable "domain_name" {
+  description = "Root domain name"
+  type        = string
+  default     = "hasb.dev"
+}
+
+variable "web_subdomain" {
+  description = "Web application subdomain"
+  type        = string
+  default     = "web"
+}
+
+variable "monitoring_subdomain" {
+  description = "Monitoring dashboard subdomain"
+  type        = string
+  default     = "monitoring"
+}
+
+variable "docs_subdomain" {
+  description = "Documentation portal subdomain"
+  type        = string
+  default     = "docs"
+}
+
+variable "web_origin_ipv4" {
+  description = "Web server origin IPv4 address (Elastic IP)"
+  type        = string
+  default     = "18.142.89.74"
 }
 ```
 
-### DNS Record via Terraform
-
+#### Zero Trust Tunnel (`terraform-cloudflare/tunnel.tf`)
 ```hcl
-resource "cloudflare_dns_record" "web" {
-  zone_id = var.cloudflare_zone_id
-  name    = "web"
-  content = aws_eip.web.public_ip
-  type    = "A"
-  proxied = true
-  ttl     = 1
-}
-```
-
-### Zero Trust Tunnel via Terraform
-
-```hcl
-resource "random_id" "tunnel_secret" {
-  byte_length = 35
-}
-
-resource "cloudflare_zero_trust_tunnel_cloudflared" "monitoring_tunnel" {
-  account_id    = var.cloudflare_account_id
-  name          = "devops-monitoring-tunnel"
-  config_src    = "cloudflare"
-  tunnel_secret = random_id.tunnel_secret.b64_std
-}
-
-resource "cloudflare_zero_trust_tunnel_cloudflared_config" "monitoring_tunnel_cfg" {
+resource "cloudflare_zero_trust_tunnel_cloudflared" "monitoring" {
   account_id = var.cloudflare_account_id
-  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id
+  name       = "devops-monitoring-tunnel"
+  config_src = "cloudflare"
+}
+
+resource "cloudflare_zero_trust_tunnel_cloudflared_config" "monitoring" {
+  account_id = var.cloudflare_account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.monitoring.id
 
   config = {
     ingress = [
       {
-        hostname = "monitoring.${var.domain_name}"
+        hostname = "${var.monitoring_subdomain}.${var.domain_name}"
         service  = "http://localhost:3000"
       },
       {
@@ -356,34 +388,68 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "monitoring_tunnel_cf
     ]
   }
 }
+```
 
-resource "cloudflare_dns_record" "monitoring_cname" {
+#### DNS Records (`terraform-cloudflare/dns.tf`)
+```hcl
+# Web Application A-Record (Proxied)
+resource "cloudflare_dns_record" "web" {
   zone_id = var.cloudflare_zone_id
-  name    = "monitoring"
-  content = "${cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id}.cfargotunnel.com"
-  type    = "CNAME"
+  name    = var.web_subdomain
+  type    = "A"
+  content = var.web_origin_ipv4
   proxied = true
   ttl     = 1
 }
 
-# In provider v5, tunnel_token is NOT an exported attribute on the tunnel resource.
-# The token is retrieved via the cloudflare_zero_trust_tunnel_cloudflared_token data source:
-data "cloudflare_zero_trust_tunnel_cloudflared_token" "monitoring_tunnel_token" {
-  account_id = var.cloudflare_account_id
-  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.monitoring_tunnel.id
+# Monitoring Dashboard CNAME pointing to Tunnel (Proxied)
+resource "cloudflare_dns_record" "monitoring" {
+  zone_id = var.cloudflare_zone_id
+  name    = var.monitoring_subdomain
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.monitoring.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
 }
 
-output "cloudflare_tunnel_token" {
-  value     = data.cloudflare_zero_trust_tunnel_cloudflared_token.monitoring_tunnel_token.token
-  sensitive = true
+# Documentation Portal CNAME pointing to GitHub Pages (Proxied)
+resource "cloudflare_dns_record" "docs" {
+  zone_id = var.cloudflare_zone_id
+  name    = var.docs_subdomain
+  type    = "CNAME"
+  content = "hasb223.github.io"
+  proxied = true
+  ttl     = 1
 }
 ```
 
-### Decoupling Recommendation
-Keep the Cloudflare Terraform configuration in a separate workspace or root
-module (e.g., `terraform/cloudflare/`) using `terraform_remote_state` to read
-`aws_eip.web.public_ip` from the AWS state file. This prevents Cloudflare API token
-requirements from blocking AWS infrastructure lifecycle tasks.
+### Import and Operation Workflow
+
+To run operations safely without secret leakage:
+
+```bash
+# 1. Initialize Terraform
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare init
+
+# 2. Resource Imports (Existing Infrastructure)
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_zero_trust_tunnel_cloudflared.monitoring <ACCOUNT_ID>/<TUNNEL_ID>
+
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_zero_trust_tunnel_cloudflared_config.monitoring <ACCOUNT_ID>/<TUNNEL_ID>
+
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_dns_record.web <ZONE_ID>/<RECORD_ID_WEB>
+
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_dns_record.monitoring <ZONE_ID>/<RECORD_ID_MONITORING>
+
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_dns_record.docs <ZONE_ID>/<RECORD_ID_DOCS>
+
+# 3. Plan Verification (0 changes / 0 drift)
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare plan
+```
 
 ---
 
