@@ -104,7 +104,7 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM arch
   - **Docker Engine**: Installed and managed via official Galaxy role `geerlingguy.docker`.
   - **Web Application Container** (`devops-web-app`): Production Nginx runtime container exposing port 80.
   - **Node Exporter Container** (`node-exporter`): Gathers host system metrics (CPU, memory, disk, network) on port 9100.
-- **IAM Profile**: `devops-ec2-ssm-profile` (AWS SSM access + read-only authorization for AWS Private ECR).
+- **IAM Profile**: `devops-web-profile` (`devops-web-role`: `AmazonSSMManagedInstanceCore` + custom `devops-web-ecr-pull-policy` strictly scoped to the application ECR repository ARN).
 
 ### 2. Ansible Controller (`10.0.0.135`)
 - **Placement**: Private Subnet (`10.0.0.128/25`).
@@ -113,7 +113,7 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM arch
 - **Runtime Components**:
   - **Ansible Core**: Executes multi-play orchestrations against target hosts.
   - **SSH Keypair**: Internal key (`devops-bootcamp-key`) authorized on target instances for VPC-internal management.
-- **IAM Profile**: `devops-controller-profile` (AWS SSM access).
+- **IAM Profile**: `devops-controller-profile` (`devops-controller-role`: `AmazonSSMManagedInstanceCore` + `devops-controller-ssm-policy` for scoped target SSM orchestration and S3 relay bucket access; zero ECR permissions).
 
 ### 3. Monitoring Server (`10.0.0.136`)
 - **Placement**: Private Subnet (`10.0.0.128/25`).
@@ -123,7 +123,7 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM arch
   - **Prometheus** (`prom/prometheus:v2.53.0`): Scrapes metrics from `10.0.0.5:9100` every 15s; binds internally to port 9090.
   - **Grafana** (`grafana/grafana:11.1.0`): Visualizes metrics on port 3000; pre-configured with declarative Prometheus data source and curated Node Exporter dashboard.
   - **Cloudflare Connector** (`cloudflare/cloudflared:2024.8.3`): Outbound Zero Trust Tunnel daemon connecting to Cloudflare Edge.
-- **IAM Profile**: `devops-ec2-ssm-profile` (AWS SSM access).
+- **IAM Profile**: `devops-monitoring-profile` (`devops-monitoring-role`: `AmazonSSMManagedInstanceCore`; zero ECR permissions, zero S3 relay permissions).
 
 ---
 

@@ -14,41 +14,90 @@ data "aws_iam_policy_document" "ec2_assume_role" {
 }
 
 # ==============================================================================
-# Base SSM Role & Instance Profile for EC2 Instances
+# Web Host IAM Role & Instance Profile (Least Privilege ECR Pull)
 # ==============================================================================
-resource "aws_iam_role" "ssm_role" {
-  name               = "devops-ec2-ssm-role"
+resource "aws_iam_role" "web_role" {
+  name               = "devops-web-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 
   tags = {
-    Name = "devops-ec2-ssm-role"
+    Name = "devops-web-role"
   }
 }
 
-# Attach SSM Core policy for Systems Manager Session Manager
-resource "aws_iam_role_policy_attachment" "ssm_core" {
-  role       = aws_iam_role.ssm_role.name
+resource "aws_iam_role_policy_attachment" "web_ssm_core" {
+  role       = aws_iam_role.web_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Attach ECR ReadOnly policy so instances can pull Docker images
-resource "aws_iam_role_policy_attachment" "ecr_readonly" {
-  role       = aws_iam_role.ssm_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+data "aws_iam_policy_document" "web_ecr_pull" {
+  statement {
+    sid       = "ECRGetAuthorizationToken"
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ECRPullAppImage"
+    effect = "Allow"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer"
+    ]
+    resources = [aws_ecr_repository.app.arn]
+  }
 }
 
-# Base Instance Profile attached to instances
-resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "devops-ec2-ssm-profile"
-  role = aws_iam_role.ssm_role.name
+resource "aws_iam_policy" "web_ecr_pull" {
+  name        = "devops-web-ecr-pull-policy"
+  description = "Least-privilege policy allowing Web EC2 to pull container images from private ECR"
+  policy      = data.aws_iam_policy_document.web_ecr_pull.json
+}
+
+resource "aws_iam_role_policy_attachment" "web_ecr_pull" {
+  role       = aws_iam_role.web_role.name
+  policy_arn = aws_iam_policy.web_ecr_pull.arn
+}
+
+resource "aws_iam_instance_profile" "web_profile" {
+  name = "devops-web-profile"
+  role = aws_iam_role.web_role.name
 
   tags = {
-    Name = "devops-ec2-ssm-profile"
+    Name = "devops-web-profile"
   }
 }
 
 # ==============================================================================
-# Dedicated Controller IAM Role (Bonus: IAM Least Privilege & Infisical Trust)
+# Monitoring Host IAM Role & Instance Profile (SSM Core Only)
+# ==============================================================================
+resource "aws_iam_role" "monitoring_role" {
+  name               = "devops-monitoring-role"
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
+
+  tags = {
+    Name = "devops-monitoring-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "monitoring_ssm_core" {
+  role       = aws_iam_role.monitoring_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "monitoring_profile" {
+  name = "devops-monitoring-profile"
+  role = aws_iam_role.monitoring_role.name
+
+  tags = {
+    Name = "devops-monitoring-profile"
+  }
+}
+
+# ==============================================================================
+# Dedicated Controller IAM Role (SSM Core + Scoped SSM/S3 Relay Policy)
 # ==============================================================================
 resource "aws_iam_role" "controller_role" {
   name               = "devops-controller-role"
@@ -62,11 +111,6 @@ resource "aws_iam_role" "controller_role" {
 resource "aws_iam_role_policy_attachment" "controller_ssm_core" {
   role       = aws_iam_role.controller_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_role_policy_attachment" "controller_ecr_readonly" {
-  role       = aws_iam_role.controller_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
 resource "aws_iam_instance_profile" "controller_profile" {
