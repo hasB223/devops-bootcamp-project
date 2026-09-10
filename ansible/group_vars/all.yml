@@ -71,4 +71,3 @@ cloudflared_container_name: "cloudflared"
 # path /ansible/CLOUDFLARE_TUNNEL_TOKEN or temporary local shell fallback).
 # Play 4 enforces a fail-fast assertion before any container is launched.
 cloudflare_tunnel_token: "{{ lookup('env', 'CLOUDFLARE_TUNNEL_TOKEN') | default('VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL', true) }}"
-

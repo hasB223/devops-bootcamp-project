@@ -1,0 +1,14 @@
+---
+extends: default
+
+ignore: |
+  ansible/roles/
+  .terraform/
+  terraform/.terraform/
+  terraform-cloudflare/.terraform/
+  app/node_modules/
+
+rules:
+  line-length: disable
+  truthy: disable
+  document-start: disable
