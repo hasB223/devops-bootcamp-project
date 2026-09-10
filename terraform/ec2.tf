@@ -16,6 +16,20 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# Target Node Bootstrap: Hardened sudoers group for ssm-user (required by Ansible become over SSM)
+locals {
+  target_user_data = <<-EOF
+    #!/bin/bash
+    set -e
+    groupadd -f ansible-admin
+    id ssm-user >/dev/null 2>&1 || useradd -m -s /bin/bash ssm-user
+    usermod -aG ansible-admin ssm-user
+    echo "%ansible-admin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible-admin
+    chmod 0440 /etc/sudoers.d/ansible-admin
+    visudo -cf /etc/sudoers.d/ansible-admin
+  EOF
+}
+
 # ==============================================================================
 # 1. Web EC2 Instance (Public Subnet, 10.0.0.5)
 # ==============================================================================
@@ -36,6 +50,9 @@ resource "aws_instance" "web" {
     volume_type           = "gp3"
     delete_on_termination = true
   }
+
+  user_data                   = local.target_user_data
+  user_data_replace_on_change = false
 
   tags = {
     Name = "web-server"
@@ -102,6 +119,9 @@ resource "aws_instance" "monitoring" {
     volume_type           = "gp3"
     delete_on_termination = true
   }
+
+  user_data                   = local.target_user_data
+  user_data_replace_on_change = false
 
   tags = {
     Name = "monitoring-server"

@@ -318,9 +318,28 @@ The Ansible Controller role (`devops-controller-role`) is granted scoped permiss
 - `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` restricted strictly to `arn:aws:s3:::devops-bootcamp-ansible-ssm-hasb/i-*`.
 
 > [!NOTE]
-> `HeadBucket` checks bucket existence and region without passing an `s3:prefix` context key. Object payloads remain strictly isolated under the instance ID prefix `i-*`. In addition, target nodes require `/etc/sudoers.d/ssm-agent-users` granting passwordless sudo to `ssm-user` for privilege escalation.
+> `HeadBucket` checks bucket existence and region without passing an `s3:prefix` context key. Object payloads remain strictly isolated under the instance ID prefix `i-*`.
 
-### 5. Execution
+### 5. Target Node Sudoers Bootstrap (Rebuild / Recovery Procedure)
+Target instances (`web` and `monitoring`) provisioned via Terraform automatically configure passwordless sudo for `ssm-user` via cloud-init `user_data` using a dedicated `ansible-admin` group. If target nodes are ever rebuilt or recovered manually without cloud-init, execute this one-time bootstrap from your workstation:
+
+```bash
+aws ssm send-command \
+  --targets "Key=tag:Role,Values=web,monitoring" \
+  --document-name "AWS-RunShellScript" \
+  --comment "Bootstrap ssm-user passwordless sudo for Ansible" \
+  --parameters 'commands=[
+    "set -e",
+    "groupadd -f ansible-admin",
+    "id ssm-user >/dev/null 2>&1 || useradd -m -s /bin/bash ssm-user",
+    "usermod -aG ansible-admin ssm-user",
+    "echo \"%ansible-admin ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/ansible-admin",
+    "chmod 0440 /etc/sudoers.d/ansible-admin",
+    "visudo -cf /etc/sudoers.d/ansible-admin"
+  ]'
+```
+
+### 6. Execution
 ```bash
 # Test connectivity via SSM ad-hoc ping
 ansible -i inventory-ssm.ini targets -m ping

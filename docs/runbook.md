@@ -127,7 +127,25 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    cd ~/devops-bootcamp-project
    ```
 
-3. **Install Controller Runtime Dependencies & Collections**:
+3. **Target Node SSM Sudo Bootstrap (Rebuild / Recovery Procedure)**:
+   Target nodes (`web-server` and `monitoring-server`) provisioned via Terraform automatically configure passwordless sudo for `ssm-user` via `user_data`. If instances are ever rebuilt or recovered manually, execute this one-time bootstrap from your workstation:
+   ```bash
+   aws ssm send-command \
+     --targets "Key=tag:Role,Values=web,monitoring" \
+     --document-name "AWS-RunShellScript" \
+     --comment "Bootstrap ssm-user passwordless sudo for Ansible" \
+     --parameters 'commands=[
+       "set -e",
+       "groupadd -f ansible-admin",
+       "id ssm-user >/dev/null 2>&1 || useradd -m -s /bin/bash ssm-user",
+       "usermod -aG ansible-admin ssm-user",
+       "echo \"%ansible-admin ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/ansible-admin",
+       "chmod 0440 /etc/sudoers.d/ansible-admin",
+       "visudo -cf /etc/sudoers.d/ansible-admin"
+     ]'
+   ```
+
+4. **Install Controller Runtime Dependencies & Collections**:
    ```bash
    # Verify / install AWS session manager plugin
    which session-manager-plugin || {
@@ -143,7 +161,7 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    ansible-galaxy collection install -r ansible/requirements.yml
    ```
 
-4. **Verify inventory resolution (SSM by default, or SSH fallback)**:
+5. **Verify inventory resolution (SSM by default, or SSH fallback)**:
    ```bash
    # Primary SSM Inventory (targeting EC2 Instance IDs via amazon.aws.aws_ssm)
    cp ansible/inventory-ssm.ini.example ansible/inventory-ssm.ini
@@ -153,7 +171,7 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    ansible -i ansible/inventory-ssm.ini targets -m ping
    ```
 
-5. **Execute master playbook over SSM**:
+6. **Execute master playbook over SSM**:
    ```bash
    export GRAFANA_ADMIN_PASSWORD="<STRONG_PASSWORD_FROM_INFISICAL>"
    export CLOUDFLARE_TUNNEL_TOKEN="<TUNNEL_TOKEN_FROM_CLOUDFLARE_DASHBOARD>"
@@ -161,7 +179,7 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml
    ```
 
-6. **Verify idempotency**:
+7. **Verify idempotency**:
    Run the playbook a second time:
    ```bash
    ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml
