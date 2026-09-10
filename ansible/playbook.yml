@@ -60,6 +60,7 @@
         - name: Run AWS CLI installer
           ansible.builtin.command:
             cmd: "/tmp/aws/install"
+          changed_when: true
           when: aws_cli_check.rc != 0
 
   roles:
@@ -77,7 +78,7 @@
         name: ssm-user
         groups: docker
         append: true
-      ignore_errors: true
+      failed_when: false
 
 
 - name: Play 2 - Deploy Application Container & Node Exporter on Web Server
