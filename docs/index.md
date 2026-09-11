@@ -49,15 +49,17 @@ This documentation covers the end-to-end cloud infrastructure, Zero-Trust networ
 ## System Architecture Blueprint
 
 !!! tip "Interactive Architecture Canvas"
-    Click the blueprint preview below or [**Open Full Interactive Canvas →**](assets/final-project-end-state.html){:target="_blank" rel="noopener"} for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
+    Click the blueprint preview below or [**Launch Full Interactive Canvas →**](assets/final-project-end-state.html){:target="_blank" rel="noopener"} for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
 
-[![DevOps Platform End-State Architecture Blueprint](assets/final-project-end-state.visual-check.1440x900.dark.png#only-dark){: style="width: 100%; border-radius: 8px; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 0.5rem;" }](assets/final-project-end-state.html){:target="_blank" rel="noopener"}
-[![DevOps Platform End-State Architecture Blueprint](assets/final-project-end-state.visual-check.1440x900.light.png#only-light){: style="width: 100%; border-radius: 8px; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 0.5rem;" }](assets/final-project-end-state.html){:target="_blank" rel="noopener"}
-
-<div style="text-align: center; margin: 1rem 0 2rem;">
-  <a href="assets/final-project-end-state.html" target="_blank" rel="noopener" class="md-button md-button--primary">
-    Open Interactive Canvas (Full Screen) →
+<div style="margin: 1.25rem 0 2rem; text-align: center;">
+  <a href="assets/final-project-end-state.html" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+    <img src="assets/final-project-end-state.visual-check.1440x900.dark.png" alt="DevOps Platform End-State Architecture Blueprint" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
   </a>
+  <div style="margin-top: 1rem;">
+    <a href="assets/final-project-end-state.html" target="_blank" rel="noopener" class="md-button md-button--primary">
+      Launch Interactive Architecture Canvas (Full Screen) →
+    </a>
+  </div>
 </div>
 
 ---
