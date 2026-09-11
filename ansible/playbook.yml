@@ -292,8 +292,42 @@
       delay: 3
       changed_when: false
 
+    - name: Probe Grafana admin authentication with desired credentials
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ grafana_port }}/api/user/preferences"
+        method: GET
+        user: "{{ grafana_admin_user }}"
+        password: "{{ grafana_admin_password }}"
+        force_basic_auth: true
+        status_code:
+          - 200
+          - 401
+      register: grafana_auth_probe
+      no_log: true
+      changed_when: false
+
+    - name: Synchronize Grafana admin password inside container on Day 2 volume
+      ansible.builtin.command:
+        cmd: "docker exec -i grafana grafana-cli admin reset-admin-password --password-from-stdin"
+        stdin: "{{ grafana_admin_password }}\n"
+      when: grafana_auth_probe.status == 401
+      no_log: true
+      changed_when: true
+
+    - name: Verify Grafana admin authentication succeeds
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ grafana_port }}/api/user/preferences"
+        method: GET
+        user: "{{ grafana_admin_user }}"
+        password: "{{ grafana_admin_password }}"
+        force_basic_auth: true
+        status_code: 200
+      no_log: true
+      changed_when: false
+
 
 - name: Play 4 - Deploy Cloudflare Tunnel Connector on Monitoring Server
+
   hosts: monitoring
   become: true
   gather_facts: false

@@ -209,6 +209,13 @@ From the Ansible Controller or via SSM on the Monitoring Server (`10.0.0.136`):
    ```
    Expected: `{"commit":"...","database":"ok","version":"11.1.0"}`.
 
+3. **Verify Grafana admin authentication & Day-2 sync**:
+   ```bash
+   curl -s -u "admin:<GRAFANA_ADMIN_PASSWORD>" http://10.0.0.136:3000/api/user/preferences | jq .
+   ```
+   Expected: Returns user preferences JSON with `HTTP 200 OK`. If `GRAFANA_ADMIN_PASSWORD` was rotated in Infisical, executing `ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml` automatically updates the internal database via in-container `grafana-cli` without manual shell commands or password exposure.
+
+
 ---
 
 ### Step 5: Cloudflare Edge Routing & Tunnel Activation
