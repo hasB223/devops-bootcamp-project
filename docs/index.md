@@ -10,53 +10,59 @@ This documentation covers the end-to-end cloud infrastructure, Zero-Trust networ
 
 <div class="grid cards" markdown>
 
-- :material-web: __Web Application__
+- __Web Application__
 
     ---
 
     Production frontend web application running in a Docker container on AWS EC2, protected by Cloudflare Anycast edge.
 
-    [:octicons-arrow-right-24: https://web.hasb.dev](https://web.hasb.dev){:target="_blank"}
+    [Open web.hasb.dev →](https://web.hasb.dev){:target="_blank" rel="noopener"}
 
-- :material-chart-timeline-variant: __Monitoring & Observability__
+- __Monitoring & Observability__
 
     ---
 
     Grafana observability dashboard visualizing Node Exporter host telemetry, routed privately over Cloudflare Zero Trust Tunnel.
 
-    [:octicons-arrow-right-24: https://monitoring.hasb.dev](https://monitoring.hasb.dev){:target="_blank"}
+    [Open monitoring.hasb.dev →](https://monitoring.hasb.dev){:target="_blank" rel="noopener"}
 
-- :material-book-open-page-variant: __Documentation Portal__
+- __Documentation Portal__
 
     ---
 
     Automated technical runbook and architecture portal hosted on custom domain via GitHub Pages and Cloudflare edge.
 
-    [:octicons-arrow-right-24: https://docs.hasb.dev](https://docs.hasb.dev)
+    [https://docs.hasb.dev →](https://docs.hasb.dev)
 
-- :material-github: __Source Code Repository__
+- __Source Code Repository__
 
     ---
 
     Complete declarative Infrastructure as Code, Ansible playbooks, Docker Compose definitions, and CI/CD pipelines.
 
-    [:octicons-arrow-right-24: GitHub Repository](https://github.com/hasB223/devops-bootcamp-project){:target="_blank"}
+    [GitHub Repository →](https://github.com/hasB223/devops-bootcamp-project){:target="_blank" rel="noopener"}
 
 </div>
 
 ---
 
-## Architecture Overview
+## System Architecture Blueprint
 
-### Interactive Architecture Canvas
-For full pan, zoom, component drill-downs, and infrastructure inspection, open the standalone interactive architecture diagram:
+!!! tip "Interactive Architecture Canvas"
+    Click the blueprint preview below or [**Open Full Interactive Canvas →**](assets/final-project-end-state.html){:target="_blank" rel="noopener"} for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
 
-> [!TIP]
-> **Explore the Interactive Canvas**: Open the dedicated [**Interactive End-State Architecture Diagram**](assets/final-project-end-state.html){:target="_blank"} for a full-screen interactive view generated via Archify.
+[![DevOps Platform End-State Architecture Blueprint](assets/final-project-end-state.visual-check.1440x900.dark.png#only-dark){: style="width: 100%; border-radius: 8px; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 0.5rem;" }](assets/final-project-end-state.html){:target="_blank" rel="noopener"}
+[![DevOps Platform End-State Architecture Blueprint](assets/final-project-end-state.visual-check.1440x900.light.png#only-light){: style="width: 100%; border-radius: 8px; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 0.5rem;" }](assets/final-project-end-state.html){:target="_blank" rel="noopener"}
+
+<div style="text-align: center; margin: 1rem 0 2rem;">
+  <a href="assets/final-project-end-state.html" target="_blank" rel="noopener" class="md-button md-button--primary">
+    Open Interactive Canvas (Full Screen) →
+  </a>
+</div>
 
 ---
 
-### End-State System Topology
+### End-State Topology Summary
 
 ```mermaid
 flowchart TD
@@ -115,55 +121,55 @@ flowchart TD
 
 <div class="grid cards" markdown>
 
-- :material-file-document-outline: __[System Architecture](architecture.md)__
+- __[System Architecture](architecture.md)__
 
     ---
 
     VPC topology, network segmentation, security group isolation, port matrices, and data flow specifications.
 
-- :material-clipboard-check-outline: __[Operational Runbook](runbook.md)__
+- __[Operational Runbook](runbook.md)__
 
     ---
 
     Step-by-step deployment instructions, verification procedures, parking protocols, and break-glass fallbacks.
 
-- :material-cloud-outline: __[AWS Terraform IaC](terraform.md)__
+- __[AWS Terraform IaC](terraform.md)__
 
     ---
 
     VPC, subnets, EC2 instances, security groups, IAM least-privilege roles, ECR repository, and S3 remote backend.
 
-- :material-shield-cloud-outline: __[Cloudflare Edge IaC](cloudflare.md)__
+- __[Cloudflare Edge IaC](cloudflare.md)__
 
     ---
 
     Cloudflare Provider v5.24.0 automation: DNS records, Zero Trust Tunnel, and declarative configuration rulesets.
 
-- :material-ansible: __[Ansible Automation](ansible.md)__
+- __[Ansible Automation](ansible.md)__
 
     ---
 
     Ansible over SSM transport with zero SSH port 22, idempotent plays, and automated in-container Grafana password synchronization.
 
-- :material-docker: __[Docker Compose Stack](docker.md)__
+- __[Docker Compose Stack](docker.md)__
 
     ---
 
     Multi-container composition, health checks, restart policies, and named volume persistence.
 
-- :material-chart-bell-curve: __[Observability & Monitoring](monitoring.md)__
+- __[Observability & Monitoring](monitoring.md)__
 
     ---
 
     Prometheus scrape jobs, node_exporter metrics, and code-provisioned Grafana dashboards.
 
-- :material-git: __[CI/CD & Delivery](cicd.md)__
+- __[CI/CD & Delivery](cicd.md)__
 
     ---
 
     GitHub Actions OIDC authentication, multi-linter PR gates, automated container builds, and zero-downtime SSM auto-deploys.
 
-- :material-key-outline: __[Secrets Management](secrets-management.md)__
+- __[Secrets Management](secrets-management.md)__
 
     ---
 
