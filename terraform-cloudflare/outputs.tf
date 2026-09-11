@@ -17,3 +17,9 @@ output "tunnel_id" {
   description = "UUID of the Cloudflare Zero Trust Tunnel"
   value       = cloudflare_zero_trust_tunnel_cloudflared.monitoring.id
 }
+
+output "ruleset_id" {
+  description = "ID of the Cloudflare Configuration Ruleset"
+  value       = cloudflare_ruleset.web_ssl_override.id
+}
+
