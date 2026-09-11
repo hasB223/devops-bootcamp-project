@@ -5048,7 +5048,7 @@
         <path data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6" data-composition-points="405,121;405,245;495,245;495,369" d="M 405 121 L 405 237 Q 405 245 413 245 L 487 245 Q 495 245 495 253 L 495 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="Ansible over SSM" data-edge-key="7" data-composition-points="585,585;585,561;601,561;601,424;582.5,424;582.5,400" d="M 585 585 L 585 569 Q 585 561 593 561 L 593 561 Q 601 561 601 553 L 601 432 Q 601 424 593 424 L 590.5 424 Q 582.5 424 582.5 416 L 582.5 400" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring via SSM" data-edge-key="8" data-composition-points="670,616;742,616" d="M 670 616 L 742 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9" data-composition-points="360,616;500,616" d="M 360 616 L 500 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="infisical" data-edge-to="ansible" data-edge-label="supplies runtime secrets" data-edge-key="9" data-composition-points="360,616;500,616" d="M 360 616 L 500 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="10" data-composition-points="897,616;933.5,616;933.5,531;970,531" d="M 897 616 L 925.5 616 Q 933.5 616 933.5 608 L 933.5 539 Q 933.5 531 941.5 531 L 970 531" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="11" data-composition-points="970,531;582.5,531;582.5,400" d="M 970 531 L 590.5 531 Q 582.5 531 582.5 523 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="12" data-composition-points="1042.5,665;1042.5,562" d="M 1042.5 665 L 1042.5 562" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5245,9 +5245,9 @@
           <rect x="631.4" y="651" width="149.2" height="14" rx="3" class="c-mask"/>
           <text x="706" y="661" class="t-security" font-size="8" text-anchor="middle">configures monitoring via SSM</text>
         </g>
-        <g data-detail="context" data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9">
-          <rect x="372.2" y="596" width="115.6" height="14" rx="3" class="c-mask"/>
-          <text x="430" y="606" class="t-security" font-size="8" text-anchor="middle">AWS IAM auth / secrets</text>
+        <g data-detail="context" data-edge-from="infisical" data-edge-to="ansible" data-edge-label="supplies runtime secrets" data-edge-key="9">
+          <rect x="367.4" y="596" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
+          <text x="430" y="606" class="t-security" font-size="8" text-anchor="middle">supplies runtime secrets</text>
         </g>
         <g data-detail="context" data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="10">
           <rect x="918.5" y="553.5" width="30" height="14" rx="3" class="c-mask"/>
@@ -5519,7 +5519,7 @@
         </div>
         <ul>
           <li>&bull; GitHub Actions uses AWS OIDC to push ECR images and trigger SSM auto-deploys</li>
-          <li>&bull; Ansible Controller manages nodes over AWS SSM (zero SSH :22); Infisical supplies runtime secrets</li>
+          <li>&bull; AWS IAM authenticates the controller; Infisical supplies runtime secrets to Ansible</li>
         </ul>
       </div>
 

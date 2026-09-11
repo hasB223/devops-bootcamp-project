@@ -18,9 +18,11 @@ Workload identities and operators authenticate through scoped, ephemeral mechani
     Click the architecture blueprint preview below or <a href="../assets/secrets-management.html" target="_blank" rel="noopener"><strong>Open Interactive Secrets Architecture →</strong></a> for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
 
 <div style="margin: 1.25rem 0 2rem; text-align: center;">
-  <a href="../assets/secrets-management.html" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-    <img class="only-dark" src="../assets/secrets-management.visual-check.1440x900.dark.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
-    <img class="only-light" src="../assets/secrets-management.visual-check.1440x900.light.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
+  <a href="../assets/secrets-management.html" class="only-dark" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+    <img src="../assets/secrets-management.visual-check.1440x900.dark.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
+  </a>
+  <a href="../assets/secrets-management.html" class="only-light" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.08); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+    <img src="../assets/secrets-management.visual-check.1440x900.light.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
   </a>
   <div style="margin-top: 1rem;">
     <a href="../assets/secrets-management.html" target="_blank" rel="noopener" class="md-button md-button--primary">
