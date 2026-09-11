@@ -294,9 +294,10 @@ The Cloudflare control plane is managed declaratively via a dedicated, decoupled
    - `CLOUDFLARE_API_TOKEN` is injected at runtime via Infisical (`infisical run --env=dev --path=/terraform-cloudflare -- ...`). It is never stored in HCL, `terraform.tfvars`, or Git.
    - For remotely managed tunnels (`config_src = "cloudflare"`), `tunnel_secret` is omitted.
    - Tunnel connector tokens live strictly in Infisical path `/ansible/CLOUDFLARE_TUNNEL_TOKEN` for Ansible host orchestration. No sensitive connector tokens are stored in Terraform state.
-4. **Manual Dependency: Edge SSL Configuration Rule**:
-   - The scoped `CLOUDFLARE_API_TOKEN` has permissions for Zone DNS and Account Tunnel, not Zone Rulesets.
-   - The Cloudflare Configuration Rule (`Hostname equals web.hasb.dev` -> `SSL = Flexible`) remains a documented manual dependency configured via the Cloudflare Dashboard. The Web EC2 origin serves HTTP on port 80, while `docs.hasb.dev` uses strict HTTPS.
+4. **Declarative Edge SSL Configuration Ruleset (`rulesets.tf`)**:
+   - Zone-level SSL encryption defaults to `Full (strict)` for `hasb.dev` (required for GitHub Pages `docs.hasb.dev`).
+   - The edge SSL override for `web.hasb.dev` is codified declaratively in `terraform-cloudflare/rulesets.tf` using the Cloudflare Provider v5 `cloudflare_ruleset` resource (phase `http_config_settings`) with a stable rule reference (`web_ssl_flexible_override`), eliminating manual dashboard configuration.
+
 
 ### Module Configuration
 
@@ -431,6 +432,34 @@ resource "cloudflare_dns_record" "docs" {
 }
 ```
 
+#### Configuration Rulesets (`terraform-cloudflare/rulesets.tf`)
+```hcl
+# Cloudflare Zone Configuration Ruleset
+# Manages edge configuration rules for hasb.dev in phase http_config_settings.
+# Overrides SSL/TLS encryption mode to Flexible specifically for web.hasb.dev
+# because the origin EC2 container serves plain HTTP on port 80.
+resource "cloudflare_ruleset" "web_ssl_override" {
+  zone_id     = var.cloudflare_zone_id
+  name        = "default"
+  description = "Zone-level configuration ruleset for hasb.dev"
+  kind        = "zone"
+  phase       = "http_config_settings"
+
+  rules = [
+    {
+      ref         = "web_ssl_flexible_override"
+      action      = "set_config"
+      description = "Web Subdomain Flexible"
+      expression  = "(http.host eq \"${var.web_subdomain}.${var.domain_name}\")"
+      enabled     = true
+      action_parameters = {
+        ssl = "flexible"
+      }
+    }
+  ]
+}
+```
+
 ### Import and Operation Workflow
 
 #### Prerequisites
@@ -476,8 +505,12 @@ infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terrafo
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
   import cloudflare_dns_record.docs <ZONE_ID>/<RECORD_ID_DOCS>
 
+infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare \
+  import cloudflare_ruleset.web_ssl_override zones/<ZONE_ID>/<RULESET_ID>
+
 # 4. Plan Verification (0 changes / 0 drift)
 infisical run --env=dev --path=/terraform-cloudflare -- terraform -chdir=terraform-cloudflare plan
+
 ```
 
 ---
