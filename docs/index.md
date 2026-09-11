@@ -69,56 +69,16 @@ This documentation covers the end-to-end cloud infrastructure, Zero-Trust networ
 
 ### End-State Topology Summary
 
-```mermaid
-flowchart TD
-    subgraph Users ["Public Internet"]
-        Browser["User Browser / Client"]
-    end
-
-    subgraph CloudflareEdge ["Cloudflare Anycast Global Edge (hasb.dev)"]
-        CF_DNS["Cloudflare DNS"]
-        CF_WAF["Cloudflare WAF / DDoS"]
-        CF_Rules["Configuration Ruleset (Flexible SSL)"]
-        CF_Tunnel["Cloudflare Zero Trust Tunnel"]
-    end
-
-    subgraph AWS ["Amazon Web Services (ap-southeast-1)"]
-        subgraph VPC ["Custom VPC (10.0.0.0/24)"]
-            subgraph PublicSubnet ["Public Subnet (10.0.0.0/25)"]
-                EIP["Elastic IP (18.142.89.74)"]
-                WebServer["Web EC2 (10.0.0.5)\nDocker: devops-web-app\nnode_exporter: 9100"]
-                IGW["Internet Gateway"]
-            end
-
-            subgraph PrivateSubnet ["Private Subnet (10.0.0.128/25)"]
-                Controller["Ansible Controller (10.0.0.135)\nInfisical CLI & SSM Agent"]
-                MonitoringServer["Monitoring EC2 (10.0.0.136)\nPrometheus (9090)\nGrafana (3000)\ncloudflared connector"]
-            end
-
-            NAT["NAT Gateway (Parked)"]
-            S3_EP["S3 VPC Endpoint (SSM Transport)"]
-        end
-
-        ECR["AWS Private ECR\nDocker Container Images"]
-        SSM["AWS Systems Manager\nSession & Run Command"]
-        S3_Bucket["S3 State & SSM Relay Bucket"]
-    end
-
-    subgraph InfisicalCloud ["Secrets Management"]
-        Infisical["Infisical Cloud (dev /ansible)"]
-    end
-
-    Browser -->|HTTPS :443| CF_WAF
-    CF_WAF --> CF_DNS
-    CF_DNS -->|A Record :80| WebServer
-    CF_DNS -->|CNAME Tunnel| CF_Tunnel
-    CF_Tunnel -->|Encrypted Outbound| MonitoringServer
-    Controller -->|Ansible over SSM| WebServer
-    Controller -->|Ansible over SSM| MonitoringServer
-    Controller -->|Fetch Secrets| Infisical
-    MonitoringServer -->|Scrape Metrics :9100| WebServer
-    WebServer -->|Pull Images| ECR
-```
+<div style="margin: 1.25rem 0 2rem; text-align: center;">
+  <a href="assets/end-state-topology-summary.svg" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); background: #0d1117; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 0.75rem; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+    <img src="assets/end-state-topology-summary.svg" alt="DevOps Platform End-State Topology Summary" style="width: 100%; max-height: 420px; object-fit: contain; display: block; margin: 0 auto;" />
+  </a>
+  <div style="margin-top: 1rem;">
+    <a href="assets/end-state-topology-summary.svg" target="_blank" rel="noopener" class="md-button">
+      Open Topology Summary Full Size →
+    </a>
+  </div>
+</div>
 
 ---
 
