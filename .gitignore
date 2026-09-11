@@ -1,7 +1,9 @@
 implementation_plan.md
 notes/
 scratch/
+site/
 *.local.md
+
 
 # Terraform
 **/.terraform/

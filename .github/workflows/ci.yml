@@ -61,11 +61,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Ansible & Linters
-        run: pip install ansible yamllint==1.38.0 ansible-lint==26.8.0
+      - name: Install Dependencies & Linters
+        run: pip install ansible yamllint==1.38.0 ansible-lint==26.8.0 -r requirements-docs.txt
 
       - name: Run Yamllint
-        run: yamllint -c .yamllint.yml .github/workflows ansible app/compose.yaml .ansible-lint
+        run: yamllint -c .yamllint.yml .github/workflows ansible app/compose.yaml .ansible-lint mkdocs.yml
 
       - name: Install Ansible Roles & Collections
         run: |
@@ -80,6 +80,12 @@ jobs:
 
       - name: Ansible Playbook Syntax Check (SSM Transport)
         run: ansible-playbook --syntax-check -i ansible/inventory-ssm.ini.example ansible/playbook.yml
+
+      - name: Strict Documentation Build Check
+        run: |
+          mkdocs build --strict
+          test -f site/CNAME
+
 
   app-build:
     name: Frontend App Build Check
