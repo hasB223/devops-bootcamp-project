@@ -8,6 +8,9 @@ This documentation covers the end-to-end cloud infrastructure, Zero-Trust networ
 
 ## Live Endpoints
 
+!!! info "Endpoint Availability & Parked State"
+    `docs.hasb.dev` is always live. `web.hasb.dev` and `monitoring.hasb.dev` are intentionally parked outside rehearsal/evaluation windows and become live after the documented [unpark procedure](runbook.md#path-1-park-runtime-resources-recommended-for-idle-intervals).
+
 <div class="grid cards" markdown>
 
 - __Web Application__
@@ -80,14 +83,14 @@ flowchart TD
     end
 
     subgraph AWS ["Amazon Web Services (ap-southeast-1)"]
-        subgraph VPC ["Custom VPC (10.0.0.0/16)"]
-            subgraph PublicSubnet ["Public Subnet (10.0.0.0/24)"]
+        subgraph VPC ["Custom VPC (10.0.0.0/24)"]
+            subgraph PublicSubnet ["Public Subnet (10.0.0.0/25)"]
                 EIP["Elastic IP (18.142.89.74)"]
                 WebServer["Web EC2 (10.0.0.5)\nDocker: devops-web-app\nnode_exporter: 9100"]
                 IGW["Internet Gateway"]
             end
 
-            subgraph PrivateSubnet ["Private Subnet (10.0.0.128/24)"]
+            subgraph PrivateSubnet ["Private Subnet (10.0.0.128/25)"]
                 Controller["Ansible Controller (10.0.0.135)\nInfisical CLI & SSM Agent"]
                 MonitoringServer["Monitoring EC2 (10.0.0.136)\nPrometheus (9090)\nGrafana (3000)\ncloudflared connector"]
             end
@@ -183,7 +186,7 @@ flowchart TD
 
 ## Verified Infrastructure Evidence
 
-All architectural components and operational tracks are verified live in AWS:
+All architectural components and operational tracks were verified during live integration and rehearsal runs, with artifact evidence preserved below:
 
 | Milestone / Component | Verification Artifact | Description |
 | :--- | :--- | :--- |
