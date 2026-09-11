@@ -11,11 +11,11 @@ The platform enforces a Zero-Trust secrets architecture that decouples cloud pro
 Workload identities and operators authenticate through scoped, ephemeral mechanisms:
 
 - **Human Operator / Admin**: Configures secrets via the Infisical Web UI with 2FA TOTP and executes `infisical run --env=dev --path=/terraform-cloudflare -- terraform apply` to inject `CLOUDFLARE_API_TOKEN` for declarative edge DNS, SSL rulesets, and tunnels.
-- **Ansible Controller**: Authenticates to Infisical Cloud via Infisical AWS Auth, leveraging its EC2 IAM Instance Profile. It executes `infisical run --env=dev --path=/ansible -- ansible-playbook playbook.yml` to inject runtime credentials (`GRAFANA_ADMIN_PASSWORD`, `CLOUDFLARE_TUNNEL_TOKEN`) directly into playbook process memory without writing secrets to disk or Git.
+- **Ansible Controller**: The durable target path is for the Ansible Controller to authenticate to Infisical Cloud via Infisical AWS Auth, using its EC2 IAM instance profile. Until that machine identity is configured, the documented interactive/controller login path remains the manual fallback. When invoked, it executes `infisical run --env=dev --path=/ansible -- ansible-playbook playbook.yml` to inject runtime credentials (`GRAFANA_ADMIN_PASSWORD`, `CLOUDFLARE_TUNNEL_TOKEN`) directly into playbook process memory without writing secrets to disk or Git.
 - **GitHub Actions & AWS IAM**: Decoupled from application secrets. CI/CD workflows authenticate via GitHub OIDC to assume short-lived AWS IAM deployer roles (`sts.amazonaws.com`), completely eliminating static cloud credentials from repository secrets.
 
 !!! tip "Interactive Architecture Canvas"
-    Click the architecture blueprint preview below or [**Open Interactive Secrets Architecture →**](assets/secrets-management.html){:target="_blank" rel="noopener"} for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
+    Click the architecture blueprint preview below or <a href="../assets/secrets-management.html" target="_blank" rel="noopener"><strong>Open Interactive Secrets Architecture →</strong></a> for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
 
 <div style="margin: 1.25rem 0 2rem; text-align: center;">
   <a href="../assets/secrets-management.html" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease;">
@@ -100,7 +100,7 @@ unused credentials create maintenance work without protecting anything.
 
 ### Secrets Architecture Diagram
 
-The end-to-end secrets flow—spanning human administration, GitHub OIDC authentication, EC2 IAM machine identity, and ephemeral playbook injection—is modeled in the [Interactive Secrets Architecture Canvas](assets/secrets-management.html) (source: [secrets-management.architecture.json](assets/secrets-management.architecture.json)).
+The end-to-end secrets flow—spanning human administration, GitHub OIDC authentication, EC2 IAM machine identity, and ephemeral playbook injection—is modeled in the <a href="../assets/secrets-management.html" target="_blank" rel="noopener">Interactive Secrets Architecture Canvas</a> (source: <a href="../assets/secrets-management.architecture.json">secrets-management.architecture.json</a>).
 
 ### Human administrator
 
@@ -119,8 +119,9 @@ See [Infisical's GitHub Actions OIDC guide](https://infisical.com/docs/integrati
 
 ### Ansible controller
 
-Create an Infisical machine identity that trusts the controller EC2 instance's
-IAM role. The controller then authenticates without an Infisical client secret:
+The durable target path is for the Ansible Controller to authenticate to Infisical Cloud via Infisical AWS Auth, using its EC2 IAM instance profile. Until that machine identity is configured, the documented interactive/controller login path remains the manual fallback.
+
+Once configured, the Infisical machine identity trusts the controller EC2 instance's IAM role, allowing authentication without an Infisical client secret:
 
 ```bash
 export INFISICAL_TOKEN="$(infisical login \
