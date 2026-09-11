@@ -5,6 +5,7 @@
 exclude_paths:
   - ansible/roles/
   - .cache/
+  - mkdocs.yml
 
 skip_list:
   - yaml  # Handled authoritatively in CI by dedicated yamllint step using .yamllint.yml
