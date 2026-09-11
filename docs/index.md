@@ -160,4 +160,4 @@ All architectural components and operational tracks were verified during live in
 | **Web Application** | [`assets/web-app-live.png`](assets/web-app-live.png) | Three.js spaceship simulation rendering live over HTTPS at `web.hasb.dev`. |
 | **Observability Dashboard** | [`assets/grafana-dashboard-live.png`](assets/grafana-dashboard-live.png) | Declarative Grafana dashboard tracking real-time CPU, RAM, and disk metrics. |
 | **Interactive Topology** | [`assets/final-project-end-state.html`](assets/final-project-end-state.html) | Interactive standalone Archify canvas with full system topology. |
-| **Secrets Architecture** | [`assets/secrets-management.architecture.json`](assets/secrets-management.architecture.json) | Complete diagrammatic model of the Infisical secrets delivery path. |
+| **Secrets Architecture** | [`assets/secrets-management.html`](assets/secrets-management.html) | Interactive standalone Archify canvas modeling the Zero-Trust Infisical secrets delivery path. |

@@ -4,6 +4,33 @@ This project uses Infisical Cloud as the central store for secrets. AWS IAM and
 OpenID Connect (OIDC) are used where possible so permanent credentials do not
 need to exist.
 
+## Interactive Secrets Architecture
+
+The platform enforces a Zero-Trust secrets architecture that decouples cloud provider authorization from runtime application secrets. Infisical Cloud (`devops-bootcamp-project`, environment `dev`) serves as the central secrets vault, organized strictly by functional path (`/ansible` and `/terraform-cloudflare`).
+
+Workload identities and operators authenticate through scoped, ephemeral mechanisms:
+
+- **Human Operator / Admin**: Configures secrets via the Infisical Web UI with 2FA TOTP and executes `infisical run --env=dev --path=/terraform-cloudflare -- terraform apply` to inject `CLOUDFLARE_API_TOKEN` for declarative edge DNS, SSL rulesets, and tunnels.
+- **Ansible Controller**: Authenticates to Infisical Cloud via Infisical AWS Auth, leveraging its EC2 IAM Instance Profile. It executes `infisical run --env=dev --path=/ansible -- ansible-playbook playbook.yml` to inject runtime credentials (`GRAFANA_ADMIN_PASSWORD`, `CLOUDFLARE_TUNNEL_TOKEN`) directly into playbook process memory without writing secrets to disk or Git.
+- **GitHub Actions & AWS IAM**: Decoupled from application secrets. CI/CD workflows authenticate via GitHub OIDC to assume short-lived AWS IAM deployer roles (`sts.amazonaws.com`), completely eliminating static cloud credentials from repository secrets.
+
+!!! tip "Interactive Architecture Canvas"
+    Click the architecture blueprint preview below or [**Open Interactive Secrets Architecture →**](assets/secrets-management.html){:target="_blank" rel="noopener"} for full-screen pan, zoom, component inspection, and flow tracing generated via Archify.
+
+<div style="margin: 1.25rem 0 2rem; text-align: center;">
+  <a href="../assets/secrets-management.html" target="_blank" rel="noopener" style="display: block; max-width: 860px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+    <img class="only-dark" src="../assets/secrets-management.visual-check.1440x900.dark.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
+    <img class="only-light" src="../assets/secrets-management.visual-check.1440x900.light.png" alt="DevOps Platform Secrets Management Architecture" style="width: 100%; max-height: 400px; object-fit: cover; object-position: top center; display: block;" />
+  </a>
+  <div style="margin-top: 1rem;">
+    <a href="../assets/secrets-management.html" target="_blank" rel="noopener" class="md-button md-button--primary">
+      Open Interactive Secrets Architecture →
+    </a>
+  </div>
+</div>
+
+---
+
 ## Decision
 
 Use the Infisical Cloud free tier. Do not self-host Infisical as part of the
@@ -54,18 +81,16 @@ describes where or how a system runs but does not grant access by itself.
 
 ## Secret Layout
 
-Use one Infisical project named `devops-bootcamp-project` and its `prod`
-environment. Add a secret only when a deployed component consumes it.
+Use one Infisical project named `devops-bootcamp-project` and its `dev`
+environment. Secrets are organized strictly by functional path:
 
 ```text
 /ansible
   CLOUDFLARE_TUNNEL_TOKEN
-  GF_SECURITY_ADMIN_PASSWORD
-  GRAFANA_VIEWER_PASSWORD
+  GRAFANA_ADMIN_PASSWORD
 
-/app
-  APP_SECRET                 # only when the application needs one
-  DATABASE_URL               # only if a database is added
+/terraform-cloudflare
+  CLOUDFLARE_API_TOKEN
 ```
 
 Do not add placeholder secrets merely to fill this layout. Empty folders and
@@ -75,7 +100,7 @@ unused credentials create maintenance work without protecting anything.
 
 ### Secrets Architecture Diagram
 
-The end-to-end secrets flow—spanning human administration, GitHub OIDC authentication, EC2 IAM machine identity, and ephemeral playbook injection—is modeled in [secrets-management.architecture.json](assets/secrets-management.architecture.json).
+The end-to-end secrets flow—spanning human administration, GitHub OIDC authentication, EC2 IAM machine identity, and ephemeral playbook injection—is modeled in the [Interactive Secrets Architecture Canvas](assets/secrets-management.html) (source: [secrets-management.architecture.json](assets/secrets-management.architecture.json)).
 
 ### Human administrator
 
@@ -106,7 +131,7 @@ export INFISICAL_TOKEN="$(infisical login \
 
 infisical run \
   --projectId="$INFISICAL_PROJECT_ID" \
-  --env=prod \
+  --env=dev \
   --path=/ansible \
   -- ansible-playbook playbook.yml
 
@@ -174,7 +199,7 @@ Complete these items before the first real secret is stored:
 
 - [ ] Create the Infisical Cloud account and enable two-factor authentication.
 - [ ] Store the account recovery codes outside Infisical.
-- [ ] Create project `devops-bootcamp-project` with environment `prod`.
+- [ ] Create project `devops-bootcamp-project` with environment `dev`.
 - [ ] Confirm the current free-tier identity and access-control limits.
 - [ ] Record only the non-secret project identifier in local planning notes.
 - [ ] Keep all real values out of Git and Terraform state.

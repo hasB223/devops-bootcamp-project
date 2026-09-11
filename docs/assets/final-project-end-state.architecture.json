@@ -46,7 +46,7 @@
   ],
   "cards": [
     { "dot": "cyan", "title": "Public Entry & Edge", "items": ["Cloudflare DNS routes *.hasb.dev; Ruleset Flexible SSL on :80; Zero Trust Tunnel for Grafana", "docs.hasb.dev served via GitHub Pages backed by Cloudflare edge caching"] },
-    { "dot": "violet", "title": "CI/CD & SSM Operations", "items": ["GitHub Actions uses AWS OIDC to push ECR images and trigger SSM auto-deploys", "Ansible Controller manages nodes over AWS SSM (zero SSH :22); Infisical injects IAM secrets"] },
+    { "dot": "violet", "title": "CI/CD & SSM Operations", "items": ["GitHub Actions uses AWS OIDC to push ECR images and trigger SSM auto-deploys", "Ansible Controller manages nodes over AWS SSM (zero SSH :22); Infisical supplies runtime secrets"] },
     { "dot": "emerald", "title": "Observability & Telemetry", "items": ["Prometheus scrapes node and app metrics over VPC private subnet", "Grafana presents code-provisioned dashboards via Cloudflare Zero Trust Tunnel"] }
   ]
 }
