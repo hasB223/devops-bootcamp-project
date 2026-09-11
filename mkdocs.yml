@@ -1,0 +1,74 @@
+site_name: DevOps Bootcamp Platform
+site_url: https://docs.hasb.dev
+site_description: Production Cloud Infrastructure, Zero-Trust Observability, and Automated GitOps Delivery
+repo_url: https://github.com/hasB223/devops-bootcamp-project
+repo_name: hasB223/devops-bootcamp-project
+edit_uri: blob/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.view
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Operational Runbook: runbook.md
+  - Infrastructure (IaC):
+      - AWS Terraform: terraform.md
+      - Cloudflare Edge IaC: cloudflare.md
+  - Configuration Management:
+      - Ansible Automation: ansible.md
+      - Docker Compose Stack: docker.md
+  - Observability & Monitoring: monitoring.md
+  - CI/CD & Delivery: cicd.md
+  - Security & Secrets:
+      - Secrets Management: secrets-management.md
+  - Engineering Standards:
+      - Git Workflow: git-workflow.md
+      - Documentation Conventions: documentation-conventions.md
