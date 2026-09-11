@@ -5030,7 +5030,7 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS ap-southeast-1" x="224" y="66" width="917" height="681" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="AWS ap-southeast-1" x="439" y="66" width="702" height="681" rx="12" class="c-region" stroke-width="1"/>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="devops-vpc 10.0.0.0/24" x="471" y="296" width="668" height="451" rx="12" class="c-region" stroke-width="1"/>
 
@@ -5039,91 +5039,91 @@
         <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="3" data-composition-frame-label="Private subnet 10.0.0.128/25 / devops-private-sg" x="484" y="476" width="647" height="271" rx="8" class="c-security-group" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="user" data-edge-to="cloudflare" data-edge-label="web.infratify.com" data-edge-key="0" data-composition-points="150,367;210,367" d="M 150 367 L 210 367" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="user" data-edge-to="cloudflare" data-edge-label="web.hasb.dev" data-edge-key="0" data-composition-points="140,367;210,367" d="M 140 367 L 210 367" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="cloudflare" data-edge-to="webec2" data-edge-label="HTTP :80 via Elastic IP" data-edge-key="1" data-composition-points="360,367;495,367" d="M 360 367 L 495 367" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="webec2" data-edge-to="app" data-edge-key="2" data-composition-points="670,369;742,369" d="M 670 369 L 742 369" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="ecr" data-edge-to="app" data-edge-label="image pull" data-edge-key="3" data-composition-points="785,150;785,244;819.5,244;819.5,338" d="M 785 150 L 785 236 Q 785 244 793 244 L 811.5 244 Q 819.5 244 819.5 252 L 819.5 338" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="github" data-edge-to="terraform" data-edge-label="IaC source" data-edge-key="4" data-composition-points="190,121;250,121" d="M 190 121 L 250 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="terraform" data-edge-to="s3state" data-edge-label="state" data-edge-key="5" data-composition-points="380,121;460,121" d="M 380 121 L 460 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6" data-composition-points="380,121;380,245;495,245;495,369" d="M 380 121 L 380 237 Q 380 245 388 245 L 487 245 Q 495 245 495 253 L 495 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="configures Docker host" data-edge-key="7" data-composition-points="585,585;585,540;430,540;430,369;495,369" d="M 585 585 L 585 548 Q 585 540 577 540 L 438 540 Q 430 540 430 532 L 430 377 Q 430 369 438 369 L 495 369" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring" data-edge-key="8" data-composition-points="670,616;742,616" d="M 670 616 L 742 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="ecr" data-edge-to="app" data-edge-label="image pull" data-edge-key="3" data-composition-points="790,150;790,244;819.5,244;819.5,338" d="M 790 150 L 790 236 Q 790 244 798 244 L 811.5 244 Q 819.5 244 819.5 252 L 819.5 338" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="github" data-edge-to="terraform" data-edge-label="IaC source" data-edge-key="4" data-composition-points="180,121;250,121" d="M 180 121 L 250 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="terraform" data-edge-to="s3state" data-edge-label="state" data-edge-key="5" data-composition-points="405,121;465,121" d="M 405 121 L 465 121" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6" data-composition-points="405,121;405,245;495,245;495,369" d="M 405 121 L 405 237 Q 405 245 413 245 L 487 245 Q 495 245 495 253 L 495 369" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="ansible" data-edge-to="webec2" data-edge-label="Ansible over SSM" data-edge-key="7" data-composition-points="585,585;585,561;601,561;601,424;582.5,424;582.5,400" d="M 585 585 L 585 569 Q 585 561 593 561 L 593 561 Q 601 561 601 553 L 601 432 Q 601 424 593 424 L 590.5 424 Q 582.5 424 582.5 416 L 582.5 400" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring via SSM" data-edge-key="8" data-composition-points="670,616;742,616" d="M 670 616 L 742 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9" data-composition-points="360,616;500,616" d="M 360 616 L 500 616" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="monitoring" data-edge-to="prometheus" data-edge-label="runs" data-edge-key="10" data-composition-points="897,616;933.5,616;933.5,531;970,531" d="M 897 616 L 925.5 616 Q 933.5 616 933.5 608 L 933.5 539 Q 933.5 531 941.5 531 L 970 531" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="11" data-composition-points="970,531;930,531;930,450;582.5,450;582.5,400" d="M 970 531 L 938 531 Q 930 531 930 523 L 930 458 Q 930 450 922 450 L 590.5 450 Q 582.5 450 582.5 442 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="prometheus" data-edge-to="webec2" data-edge-label="scrapes metrics" data-edge-key="11" data-composition-points="970,531;582.5,531;582.5,400" d="M 970 531 L 590.5 531 Q 582.5 531 582.5 523 L 582.5 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="grafana" data-edge-to="prometheus" data-edge-label="queries" data-edge-key="12" data-composition-points="1042.5,665;1042.5,562" d="M 1042.5 665 L 1042.5 562" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="13" data-composition-points="285,396;285,430;180,430;180,780;930,780;930,696;970,696" d="M 285 396 L 285 422 Q 285 430 277 430 L 188 430 Q 180 430 180 438 L 180 772 Q 180 780 188 780 L 922 780 Q 930 780 930 772 L 930 704 Q 930 696 938 696 L 970 696" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.hasb.dev (Tunnel)" data-edge-key="13" data-composition-points="285,396;285,430;180,430;180,780;930,780;930,696;970,696" d="M 285 396 L 285 422 Q 285 430 277 430 L 188 430 Q 180 430 180 438 L 180 772 Q 180 780 188 780 L 922 780 Q 930 780 930 772 L 930 704 Q 930 696 938 696 L 970 696" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-user" data-node-id="user" data-node-label="User" tabindex="0" role="button" aria-label="Focus User, browser, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="browser" data-node-context="Architecture component">
           <title>User · browser · Architecture component</title>
-          <rect x="40" y="338" width="110" height="58" rx="6" class="c-mask"/>
-          <rect x="40" y="338" width="110" height="58" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 344) scale(0.6875)">
+          <rect x="30" y="338" width="110" height="58" rx="6" class="c-mask"/>
+          <rect x="30" y="338" width="110" height="58" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(36 344) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="95" y="365" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
-        <text data-detail="context" x="95" y="381" class="t-muted" font-size="9" text-anchor="middle">browser</text>
+          <text data-node-label="" data-detail-anchor="" x="85" y="365" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">User</text>
+        <text data-detail="context" x="85" y="381" class="t-muted" font-size="9" text-anchor="middle">browser</text>
         </g>
 
-        <g id="node-cloudflare" data-node-id="cloudflare" data-node-label="Cloudflare DNS" tabindex="0" role="button" aria-label="Focus Cloudflare DNS, web + monitoring domains, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="web + monitoring domains" data-node-context="Architecture component">
-          <title>Cloudflare DNS · web + monitoring domains · Architecture component</title>
+        <g id="node-cloudflare" data-node-id="cloudflare" data-node-label="Cloudflare Edge" tabindex="0" role="button" aria-label="Focus Cloudflare Edge, DNS · Tunnel · SSL Ruleset, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="DNS · Tunnel · SSL Ruleset" data-node-context="Architecture component">
+          <title>Cloudflare Edge · DNS · Tunnel · SSL Ruleset · Architecture component</title>
           <rect x="210" y="338" width="150" height="58" rx="6" class="c-mask"/>
           <rect x="210" y="338" width="150" height="58" rx="6" class="c-external" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(216 344) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="285" y="365" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cloudflare DNS</text>
-        <text data-detail="context" x="285" y="381" class="t-muted" font-size="9" text-anchor="middle">web + monitoring domains</text>
+          <text data-node-label="" data-detail-anchor="" x="285" y="365" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cloudflare Edge</text>
+        <text data-detail="context" x="285" y="381" class="t-muted" font-size="9" text-anchor="middle">DNS · Tunnel · SSL Ruleset</text>
         </g>
 
-        <g id="node-github" data-node-id="github" data-node-label="GitHub Repo" tabindex="0" role="button" aria-label="Focus GitHub Repo, devops-bootcamp-project, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="devops-bootcamp-project" data-node-context="Architecture component">
-          <title>GitHub Repo · devops-bootcamp-project · Architecture component</title>
-          <rect x="40" y="92" width="150" height="58" rx="6" class="c-mask"/>
-          <rect x="40" y="92" width="150" height="58" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 98) scale(0.6875)">
+        <g id="node-github" data-node-id="github" data-node-label="GitHub &amp; Pages" tabindex="0" role="button" aria-label="Focus GitHub &amp; Pages, repo · docs.hasb.dev, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="repo · docs.hasb.dev" data-node-context="Architecture component">
+          <title>GitHub &amp; Pages · repo · docs.hasb.dev · Architecture component</title>
+          <rect x="30" y="92" width="150" height="58" rx="6" class="c-mask"/>
+          <rect x="30" y="92" width="150" height="58" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(36 98) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="115" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">GitHub Repo</text>
-        <text data-detail="context" x="115" y="135" class="t-muted" font-size="9" text-anchor="middle">devops-bootcamp-project</text>
+          <text data-node-label="" data-detail-anchor="" x="105" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">GitHub &amp; Pages</text>
+        <text data-detail="context" x="105" y="135" class="t-muted" font-size="9" text-anchor="middle">repo · docs.hasb.dev</text>
         </g>
 
-        <g id="node-terraform" data-node-id="terraform" data-node-label="Terraform" tabindex="0" role="button" aria-label="Focus Terraform, provisions AWS, AWS ap-southeast-1" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="provisions AWS" data-node-context="AWS ap-southeast-1">
-          <title>Terraform · provisions AWS · AWS ap-southeast-1</title>
-          <rect x="250" y="92" width="130" height="58" rx="6" class="c-mask"/>
-          <rect x="250" y="92" width="130" height="58" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <g id="node-terraform" data-node-id="terraform" data-node-label="Terraform &amp; CI/CD" tabindex="0" role="button" aria-label="Focus Terraform &amp; CI/CD, IaC · OIDC · SSM deploy, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="IaC · OIDC · SSM deploy" data-node-context="Architecture component">
+          <title>Terraform &amp; CI/CD · IaC · OIDC · SSM deploy · Architecture component</title>
+          <rect x="250" y="92" width="155" height="58" rx="6" class="c-mask"/>
+          <rect x="250" y="92" width="155" height="58" rx="6" class="c-cloud" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(256 98) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="315" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Terraform</text>
-        <text data-detail="context" x="315" y="135" class="t-muted" font-size="9" text-anchor="middle">provisions AWS</text>
+          <text data-node-label="" data-detail-anchor="" x="327.5" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Terraform &amp; CI/CD</text>
+        <text data-detail="context" x="327.5" y="135" class="t-muted" font-size="9" text-anchor="middle">IaC · OIDC · SSM deploy</text>
         </g>
 
-        <g id="node-s3state" data-node-id="s3state" data-node-label="S3 State Bucket" tabindex="0" role="button" aria-label="Focus S3 State Bucket, remote Terraform state, AWS ap-southeast-1" aria-pressed="false" data-node-kind="database" data-node-sublabel="remote Terraform state" data-node-context="AWS ap-southeast-1">
-          <title>S3 State Bucket · remote Terraform state · AWS ap-southeast-1</title>
-          <rect x="460" y="92" width="145" height="58" rx="6" class="c-mask"/>
-          <rect x="460" y="92" width="145" height="58" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(466 98) scale(0.6875)">
+        <g id="node-s3state" data-node-id="s3state" data-node-label="S3 State &amp; Relay" tabindex="0" role="button" aria-label="Focus S3 State &amp; Relay, Terraform state · SSM files, AWS ap-southeast-1" aria-pressed="false" data-node-kind="database" data-node-sublabel="Terraform state · SSM files" data-node-context="AWS ap-southeast-1">
+          <title>S3 State &amp; Relay · Terraform state · SSM files · AWS ap-southeast-1</title>
+          <rect x="465" y="92" width="155" height="58" rx="6" class="c-mask"/>
+          <rect x="465" y="92" width="155" height="58" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(471 98) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="532.5" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 State Bucket</text>
-        <text data-detail="context" x="532.5" y="135" class="t-muted" font-size="9" text-anchor="middle">remote Terraform state</text>
+          <text data-node-label="" data-detail-anchor="" x="542.5" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 State &amp; Relay</text>
+        <text data-detail="context" x="542.5" y="135" class="t-muted" font-size="9" text-anchor="middle">Terraform state · SSM files</text>
         </g>
 
-        <g id="node-ecr" data-node-id="ecr" data-node-label="ECR Registry" tabindex="0" role="button" aria-label="Focus ECR Registry, devops-bootcamp/final-project-&lt;nama&gt;, AWS ap-southeast-1" aria-pressed="false" data-node-kind="database" data-node-sublabel="devops-bootcamp/final-project-&lt;nama&gt;" data-node-context="AWS ap-southeast-1">
-          <title>ECR Registry · devops-bootcamp/final-project-&lt;nama&gt; · AWS ap-southeast-1</title>
-          <rect x="685" y="92" width="200" height="58" rx="6" class="c-mask"/>
-          <rect x="685" y="92" width="200" height="58" rx="6" class="c-database" stroke-width="1.5"/>
+        <g id="node-ecr" data-node-id="ecr" data-node-label="ECR Registry" tabindex="0" role="button" aria-label="Focus ECR Registry, devops-bootcamp/final-project-hasb, AWS ap-southeast-1" aria-pressed="false" data-node-kind="database" data-node-sublabel="devops-bootcamp/final-project-hasb" data-node-context="AWS ap-southeast-1">
+          <title>ECR Registry · devops-bootcamp/final-project-hasb · AWS ap-southeast-1</title>
+          <rect x="685" y="92" width="210" height="58" rx="6" class="c-mask"/>
+          <rect x="685" y="92" width="210" height="58" rx="6" class="c-database" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(691 98) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="785" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ECR Registry</text>
-        <text data-detail="context" x="785" y="135" class="t-muted" font-size="8.8" text-anchor="middle">devops-bootcamp/final-project-&lt;nama&gt;</text>
+          <text data-node-label="" data-detail-anchor="" x="790" y="119" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ECR Registry</text>
+        <text data-detail="context" x="790" y="135" class="t-muted" font-size="9" text-anchor="middle">devops-bootcamp/final-project-hasb</text>
         </g>
 
         <g id="node-webec2" data-node-id="webec2" data-node-label="Web EC2" tabindex="0" role="button" aria-label="Focus Web EC2, 10.0.0.5 + Elastic IP :80, AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Public subnet 10.0.0.0/25 / devops-public-sg" aria-pressed="false" data-node-kind="backend" data-node-sublabel="10.0.0.5 + Elastic IP :80" data-node-tag="public subnet" data-node-context="AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Public subnet 10.0.0.0/25 / devops-public-sg">
@@ -5173,8 +5173,8 @@
         <text data-detail="fine" x="819.5" y="639" class="t-backend" font-size="7" text-anchor="middle">private subnet</text>
         </g>
 
-        <g id="node-prometheus" data-node-id="prometheus" data-node-label="Prometheus" tabindex="0" role="button" aria-label="Focus Prometheus, scrapes metrics, AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg" aria-pressed="false" data-node-kind="database" data-node-sublabel="scrapes metrics" data-node-context="AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg">
-          <title>Prometheus · scrapes metrics · AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg</title>
+        <g id="node-prometheus" data-node-id="prometheus" data-node-label="Prometheus" tabindex="0" role="button" aria-label="Focus Prometheus, scrapes metrics :9090, AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg" aria-pressed="false" data-node-kind="database" data-node-sublabel="scrapes metrics :9090" data-node-context="AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg">
+          <title>Prometheus · scrapes metrics :9090 · AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg</title>
           <rect x="970" y="500" width="145" height="62" rx="6" class="c-mask"/>
           <rect x="970" y="500" width="145" height="62" rx="6" class="c-database" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(976 506) scale(0.6875)">
@@ -5182,11 +5182,11 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1042.5" y="529" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Prometheus</text>
-        <text data-detail="context" x="1042.5" y="545" class="t-muted" font-size="9" text-anchor="middle">scrapes metrics</text>
+        <text data-detail="context" x="1042.5" y="545" class="t-muted" font-size="9" text-anchor="middle">scrapes metrics :9090</text>
         </g>
 
-        <g id="node-grafana" data-node-id="grafana" data-node-label="Grafana" tabindex="0" role="button" aria-label="Focus Grafana, dashboard UI, AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="dashboard UI" data-node-context="AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg">
-          <title>Grafana · dashboard UI · AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg</title>
+        <g id="node-grafana" data-node-id="grafana" data-node-label="Grafana" tabindex="0" role="button" aria-label="Focus Grafana, dashboard UI :3000, AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="dashboard UI :3000" data-node-context="AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg">
+          <title>Grafana · dashboard UI :3000 · AWS ap-southeast-1 › devops-vpc 10.0.0.0/24 › Private subnet 10.0.0.128/25 / devops-private-sg</title>
           <rect x="970" y="665" width="145" height="62" rx="6" class="c-mask"/>
           <rect x="970" y="665" width="145" height="62" rx="6" class="c-frontend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(976 671) scale(0.6875)">
@@ -5196,7 +5196,7 @@
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1042.5" y="694" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Grafana</text>
-        <text data-detail="context" x="1042.5" y="710" class="t-muted" font-size="9" text-anchor="middle">dashboard UI</text>
+        <text data-detail="context" x="1042.5" y="710" class="t-muted" font-size="9" text-anchor="middle">dashboard UI :3000</text>
         </g>
 
         <g id="node-infisical" data-node-id="infisical" data-node-label="Infisical Cloud" tabindex="0" role="button" aria-label="Focus Infisical Cloud, secrets store (/ansible), Architecture component" aria-pressed="false" data-node-kind="security" data-node-sublabel="secrets store (/ansible)" data-node-context="Architecture component">
@@ -5212,9 +5212,9 @@
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="user" data-edge-to="cloudflare" data-edge-label="web.infratify.com" data-edge-key="0">
-          <rect x="134.2" y="400" width="91.6" height="14" rx="3" class="c-mask"/>
-          <text x="180" y="410" class="t-backend" font-size="8" text-anchor="middle">web.infratify.com</text>
+        <g data-detail="context" data-edge-from="user" data-edge-to="cloudflare" data-edge-label="web.hasb.dev" data-edge-key="0">
+          <rect x="141.2" y="400" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="175" y="410" class="t-backend" font-size="8" text-anchor="middle">web.hasb.dev</text>
         </g>
         <g data-detail="context" data-edge-from="cloudflare" data-edge-to="webec2" data-edge-label="HTTP :80 via Elastic IP" data-edge-key="1">
           <rect x="367.3" y="347" width="120.39999999999999" height="14" rx="3" class="c-mask"/>
@@ -5226,24 +5226,24 @@
           <text x="850" y="245" class="t-messagebus" font-size="8" text-anchor="middle">image pull</text>
         </g>
         <g data-detail="context" data-edge-from="github" data-edge-to="terraform" data-edge-label="IaC source" data-edge-key="4">
-          <rect x="191" y="101" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="220" y="111" class="t-messagebus" font-size="8" text-anchor="middle">IaC source</text>
+          <rect x="186" y="101" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="215" y="111" class="t-messagebus" font-size="8" text-anchor="middle">IaC source</text>
         </g>
         <g data-detail="context" data-edge-from="terraform" data-edge-to="s3state" data-edge-label="state" data-edge-key="5">
           <rect x="403" y="101" width="34" height="14" rx="3" class="c-mask"/>
           <text x="420" y="111" class="t-messagebus" font-size="8" text-anchor="middle">state</text>
         </g>
         <g data-detail="context" data-edge-from="terraform" data-edge-to="webec2" data-edge-label="creates infra" data-edge-key="6">
-          <rect x="401.3" y="225" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="437.5" y="235" class="t-messagebus" font-size="8" text-anchor="middle">creates infra</text>
+          <rect x="413.8" y="225" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="450" y="235" class="t-messagebus" font-size="8" text-anchor="middle">creates infra</text>
         </g>
-        <g data-detail="context" data-edge-from="ansible" data-edge-to="webec2" data-edge-label="configures Docker host" data-edge-key="7">
-          <rect x="397.2" y="500" width="115.6" height="14" rx="3" class="c-mask"/>
-          <text x="455" y="510" class="t-security" font-size="8" text-anchor="middle">configures Docker host</text>
+        <g data-detail="context" data-edge-from="ansible" data-edge-to="webec2" data-edge-label="Ansible over SSM" data-edge-key="7">
+          <rect x="549.6" y="541" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="593" y="551" class="t-security" font-size="8" text-anchor="middle">Ansible over SSM</text>
         </g>
-        <g data-detail="context" data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring" data-edge-key="8">
-          <rect x="650.6" y="651" width="110.8" height="14" rx="3" class="c-mask"/>
-          <text x="706" y="661" class="t-security" font-size="8" text-anchor="middle">configures monitoring</text>
+        <g data-detail="context" data-edge-from="ansible" data-edge-to="monitoring" data-edge-label="configures monitoring via SSM" data-edge-key="8">
+          <rect x="631.4" y="651" width="149.2" height="14" rx="3" class="c-mask"/>
+          <text x="706" y="661" class="t-security" font-size="8" text-anchor="middle">configures monitoring via SSM</text>
         </g>
         <g data-detail="context" data-edge-from="infisical" data-edge-to="ansible" data-edge-label="AWS IAM auth / secrets" data-edge-key="9">
           <rect x="372.2" y="596" width="115.6" height="14" rx="3" class="c-mask"/>
@@ -5261,15 +5261,15 @@
           <rect x="1020.7" y="645" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="1042.5" y="655" class="t-backend" font-size="8" text-anchor="middle">queries</text>
         </g>
-        <g data-detail="context" data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.infratify.com" data-edge-key="13">
-          <rect x="577.4" y="750" width="125.19999999999999" height="14" rx="3" class="c-mask"/>
-          <text x="640" y="760" class="t-messagebus" font-size="8" text-anchor="middle">monitoring.infratify.com</text>
+        <g data-detail="context" data-edge-from="cloudflare" data-edge-to="grafana" data-edge-label="monitoring.hasb.dev (Tunnel)" data-edge-key="13">
+          <rect x="567.8" y="750" width="144.4" height="14" rx="3" class="c-mask"/>
+          <text x="640" y="760" class="t-messagebus" font-size="8" text-anchor="middle">monitoring.hasb.dev (Tunnel)</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
         <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="AWS ap-southeast-1">
-          <rect data-graph-role="structural-frame-label-mask" x="228" y="72" width="107.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="232" y="85" class="t-cloud" font-size="9" font-weight="600">AWS ap-southeast-1</text>
+          <rect data-graph-role="structural-frame-label-mask" x="443" y="72" width="107.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="447" y="85" class="t-cloud" font-size="9" font-weight="600">AWS ap-southeast-1</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="devops-vpc 10.0.0.0/24">
@@ -5504,33 +5504,33 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>Public Entry</h3>
+          <h3>Public Entry &amp; Edge</h3>
         </div>
         <ul>
-          <li>&bull; Cloudflare resolves the public web and monitoring names</li>
-          <li>&bull; Elastic IP exposes the web server on port 80</li>
+          <li>&bull; Cloudflare DNS routes *.hasb.dev; Ruleset Flexible SSL on :80; Zero Trust Tunnel for Grafana</li>
+          <li>&bull; docs.hasb.dev served via GitHub Pages backed by Cloudflare edge caching</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot violet"></div>
-          <h3>Provision and Configure</h3>
+          <h3>CI/CD &amp; SSM Operations</h3>
         </div>
         <ul>
-          <li>&bull; Terraform creates network, compute, ECR, and S3 state resources</li>
-          <li>&bull; Infisical injects secrets via IAM; Ansible configures hosts</li>
+          <li>&bull; GitHub Actions uses AWS OIDC to push ECR images and trigger SSM auto-deploys</li>
+          <li>&bull; Ansible Controller manages nodes over AWS SSM (zero SSH :22); Infisical injects IAM secrets</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>Observe</h3>
+          <h3>Observability &amp; Telemetry</h3>
         </div>
         <ul>
-          <li>&bull; Prometheus scrapes the deployed service</li>
-          <li>&bull; Grafana presents the final monitoring dashboard</li>
+          <li>&bull; Prometheus scrapes node and app metrics over VPC private subnet</li>
+          <li>&bull; Grafana presents code-provisioned dashboards via Cloudflare Zero Trust Tunnel</li>
         </ul>
       </div>
     </div>
