@@ -1,0 +1,8 @@
+/* Theme-aware asset switching without JavaScript */
+[data-md-color-scheme="default"] .only-dark {
+  display: none !important;
+}
+
+[data-md-color-scheme="slate"] .only-light {
+  display: none !important;
+}
