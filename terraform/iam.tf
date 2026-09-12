@@ -493,11 +493,15 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
       "iam:GetRolePolicy",
       "iam:ListRolePolicies",
       "iam:ListAttachedRolePolicies",
+      "iam:ListRoleTags",
       "iam:GetPolicy",
       "iam:GetPolicyVersion",
       "iam:ListPolicyVersions",
+      "iam:ListPolicyTags",
       "iam:GetInstanceProfile",
-      "iam:GetOpenIDConnectProvider"
+      "iam:ListInstanceProfileTags",
+      "iam:GetOpenIDConnectProvider",
+      "iam:ListOpenIDConnectProviderTags"
     ]
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/devops-*",
@@ -514,7 +518,8 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     actions = [
       "ecr:DescribeRepositories",
       "ecr:GetRepositoryPolicy",
-      "ecr:GetLifecyclePolicy"
+      "ecr:GetLifecyclePolicy",
+      "ecr:ListTagsForResource"
     ]
     resources = [
       aws_ecr_repository.app.arn

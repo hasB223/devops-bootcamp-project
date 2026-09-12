@@ -1,0 +1,45 @@
+name: Validate OIDC Terraform Plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-plan:
+    name: Validate OIDC Speculative Plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+          terraform_wrapper: false
+
+      - name: Initialize Terraform Backend
+        run: terraform -chdir=terraform init -backend=true
+
+      - name: Execute Speculative Unpark Plan
+        run: |
+          terraform -chdir=terraform plan \
+            -out=unpark.tfplan \
+            -var="instance_type=t3.small" \
+            -var="key_name=devops-bootcamp-macbook-ed25519"
+
+      - name: Verify Plan JSON Parsing
+        run: |
+          terraform -chdir=terraform show -json unpark.tfplan > /dev/null
+          echo "Successfully refreshed state and verified unpark plan JSON output!"
+          rm -f terraform/unpark.tfplan
