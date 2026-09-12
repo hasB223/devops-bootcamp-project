@@ -237,15 +237,14 @@ CLOUDFLARE_TUNNEL_TOKEN="<tunnel_token>" \
 ansible-playbook -i inventory.ini playbook.yml
 ```
 
-> [!IMPORTANT]
-> **Grafana Root URL Synchronization When Using Tags**:
-> If running with `--tags cloudflare` only, Play 3 is skipped. Any new or modified
-> `GF_SERVER_ROOT_URL=https://{{ monitoring_fqdn }}` setting in
-> `ansible/templates/monitoring/compose.yaml.j2` will **not** be re-templated or
-> applied to the running Grafana container.
-> To ensure Grafana redirects users to `https://monitoring.hasb.dev` instead of
-> `localhost:3000`, include the `monitoring` tag (`--tags monitoring,cloudflare`)
-> or execute the full playbook whenever domain variables change.
+!!! important "Grafana Root URL Synchronization When Using Tags"
+    If running with `--tags cloudflare` only, Play 3 is skipped. Any new or modified
+    `GF_SERVER_ROOT_URL=https://{{ monitoring_fqdn }}` setting in
+    `ansible/templates/monitoring/compose.yaml.j2` will **not** be re-templated or
+    applied to the running Grafana container.
+    To ensure Grafana redirects users to `https://monitoring.hasb.dev` instead of
+    `localhost:3000`, include the `monitoring` tag (`--tags monitoring,cloudflare`)
+    or execute the full playbook whenever domain variables change.
 
 The playbook executes:
 1. **Preflight Assertion**: Verifies `CLOUDFLARE_TUNNEL_TOKEN` is present, valid length (>= 30 characters), and non-placeholder (`no_log: true`).
@@ -270,9 +269,7 @@ The playbook executes:
    - **Proxy status**:
      - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages hosting/edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
      - **Proxied (Orange cloud) [Optional Post-Provisioning]**: Routes traffic through Cloudflare's Anycast edge for DDoS protection and Cloudflare edge caching.
-       > [!IMPORTANT]
-       > With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`).
-       > Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
+       **Important:** With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`). Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
    - **TTL**: Auto.
    - Click **Save**.
 

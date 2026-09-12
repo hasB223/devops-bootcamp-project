@@ -1,6 +1,6 @@
 # CI/CD Automation Runbook
 
-Status: verified
+**Verification scope:** Checked against current Terraform, GitHub Actions workflows, repository variables, and captured CI/CD run evidence.
 
 This document describes the continuous integration, container publishing, and documentation delivery pipelines for the DevOps platform, automated using **GitHub Actions** and secured via **AWS IAM OpenID Connect (OIDC)** identity federation.
 
@@ -9,6 +9,7 @@ This document describes the continuous integration, container publishing, and do
 ## Purpose
 
 The CI/CD pipeline implements a secure, automated delivery lifecycle for all infrastructure and application code:
+
 - **Pull Request Quality Gates**: Automatically validates Terraform code formatting, configuration validity (backendless), Ansible playbook syntax, and frontend Node.js unit tests/production builds on every PR before merge.
 - **Keyless AWS Authentication**: Uses short-lived OIDC tokens exchanged directly with AWS Security Token Service (STS) to authenticate GitHub Actions runners without creating or storing long-lived AWS IAM access keys.
 - **Automated Container Publishing**: Builds and tags the Three.js multi-stage container image upon merges to `main` and publishes it to AWS Private Elastic Container Registry (ECR).
@@ -54,8 +55,8 @@ The pipelines consume non-sensitive parameters as **Repository Variables** (`var
 | `AWS_ROLE_TO_ASSUME` | `arn:aws:iam::164824552037:role/devops-github-actions-role` | `terraform output github_actions_role_arn` |
 | `ECR_REPOSITORY` | `devops-bootcamp/final-project-hasb` | `terraform output ecr_repository_url` (name segment) |
 
-> [!IMPORTANT]
-> **Zero Static Credentials Policy**: Do not create or store AWS IAM access keys in GitHub Secrets. All AWS API calls from Actions runners authenticate through temporary credentials issued via `sts:AssumeRoleWithWebIdentity`.
+!!! important "Zero Static Credentials Policy"
+    Do not create or store AWS IAM access keys in GitHub Secrets. All AWS API calls from Actions runners authenticate through temporary credentials issued via `sts:AssumeRoleWithWebIdentity`.
 
 ---
 
@@ -133,8 +134,8 @@ This workflow packages the containerized application and publishes it to AWS Pri
    ```
 4. **Tag & Push**: Pushes both the immutable commit SHA (`${{ github.sha }}`) and mutable `latest` tags to ECR.
 
-> [!NOTE]
-> **Decoupled Deployment Boundary**: Pushing a new container to ECR does not automatically trigger rolling restarts on Web EC2. Production container updates on the host are executed intentionally via the Ansible Controller playbook (`ansible/playbook.yml`).
+!!! note "Decoupled Deployment Boundary"
+    Pushing a new container to ECR does not automatically trigger rolling restarts on Web EC2. Production container updates on the host are executed intentionally via the Ansible Controller playbook (`ansible/playbook.yml`).
 
 ---
 
@@ -153,6 +154,10 @@ This workflow publishes the interactive documentation portal (`docs/index.html`,
 1. Configures Pages runtime with `actions/configure-pages@v5`.
 2. Packages the `docs/` directory as an artifact with `actions/upload-pages-artifact@v3`.
 3. Deploys the artifact to the GitHub Pages environment via `actions/deploy-pages@v4`.
+
+#### CDN Edge Caching & Invalidation:
+
+The documentation portal is accelerated by Cloudflare edge caching backed by the GitHub Pages origin (`max-age=600`). Canonical URLs may briefly serve cached responses following deployment until edge TTLs expire. For major visual releases (such as Archify diagrams or homepage previews), follow the manual single-file Cloudflare purge procedure documented in the [Operational Runbook](runbook.md#documentation-portal-deployment-cdn-cache-invalidation).
 
 ---
 

@@ -1,6 +1,6 @@
 # Master Operational Runbook
 
-Status: verified
+**Verification scope:** Checked against current Terraform, Ansible, Cloudflare IaC, CI/CD workflows, and captured live integration evidence.
 
 This runbook provides the definitive, repeatable operational guide for provisioning, configuring, verifying, and tearing down the DevOps platform from zero to fully operational.
 
@@ -9,6 +9,7 @@ This runbook provides the definitive, repeatable operational guide for provision
 ## Purpose
 
 This runbook acts as the central reference for operations:
+
 - Outlines the exact 0-to-1 provisioning sequence across Terraform, Docker, Ansible, and Cloudflare.
 - Details end-to-end operational verification across all network, compute, application, and observability endpoints.
 - Provides a **two-path cost management framework**: parking runtime resources to eliminate hourly costs during idle periods versus executing a full infrastructure teardown.
@@ -186,8 +187,8 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
    ```
    Confirm the summary returns `changed=0`.
 
-> [!TIP]
-> **Break-Glass SSH Fallback**: If emergency access is ever required, port 22 can be restored by reapplying Terraform with `-var="enable_ssh_ingress=true"`. You can then run using `ansible/inventory.ini`.
+!!! tip "Break-Glass SSH Fallback"
+    If emergency access is ever required, port 22 can be restored by reapplying Terraform with `-var="enable_ssh_ingress=true"`. You can then run using `ansible/inventory.ini`.
 
 ---
 
@@ -262,6 +263,52 @@ Expected responses:
 - `https://monitoring.hasb.dev`: `HTTP/2 200` or `302` (Redirect to Grafana `/login`)
 - `https://docs.hasb.dev`: `HTTP/2 200`
 - `https://hasb223.github.io/devops-bootcamp-project/`: `HTTP/2 301` (Redirect to `https://docs.hasb.dev/`)
+
+### Documentation Portal Deployment & CDN Cache Invalidation
+
+`docs.hasb.dev` is hosted on GitHub Pages and accelerated via Cloudflare edge caching. GitHub Pages and upstream Fastly proxies specify `cache-control: max-age=600` (10 minutes).
+
+While cache-busted URLs (e.g. `?v=...`) reflect new deployments immediately, canonical URLs may briefly serve cached content until edge TTLs expire. This is normal CDN behavior, not a deployment failure. For major visual or documentation releases, perform a manual single-file purge in the Cloudflare Dashboard.
+
+#### When to Purge
+
+- **Regenerated Archify Assets**: After compiling updated `*.architecture.json` models or regenerating standalone HTML/SVG/PNG canvases.
+- **Homepage Preview Assets**: After updating `.only-dark` / `.only-light` preview cards or stylesheet rules on `docs/index.md`.
+- **Review & Evaluation Windows**: Prior to sharing canonical URLs with external reviewers where stale cached visuals could cause confusion.
+
+#### What to Purge
+
+Prefer **Single-File Purge (Custom Purge by URL)** to maintain high cache hit rates across the rest of the documentation and avoid origin pressure. Avoid "Purge Everything" unless executing a global site redesign.
+
+Target canonical URLs to purge:
+
+- `https://docs.hasb.dev/`
+- `https://docs.hasb.dev/assets/final-project-end-state.html`
+- `https://docs.hasb.dev/assets/secrets-management.html`
+- Any updated visual-check PNG/SVG assets, e.g.:
+  - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.light.png`
+  - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.dark.png`
+  - `https://docs.hasb.dev/assets/end-state-topology-summary.light.svg`
+
+**Cloudflare Dashboard Navigation**:
+`Cloudflare Dashboard -> hasb.dev -> Caching -> Configuration -> Purge Cache -> Custom Purge -> URL`
+
+#### Post-Purge Verification
+
+Always verify by loading the **canonical URL directly** in a browser (do not rely solely on a cache-busted `?v=...` URL):
+
+1. **Homepage Check**: Open `https://docs.hasb.dev/` in browser. Toggle light and dark themes to confirm preview cards switch cleanly between light and dark visual checks without layout shifts or dark image bleed.
+2. **Archify Canvas Check**: Open `https://docs.hasb.dev/assets/final-project-end-state.html`. Confirm updated labels, connection titles, and guide text are visible, and confirm zero legacy domain references (`infratify`) appear:
+   ```bash
+   # Edge verification via terminal
+   curl -s https://docs.hasb.dev/assets/final-project-end-state.html | grep -E "(AWS IAM authenticates the controller|supplies runtime secrets)"
+   ```
+
+!!! note "Future Automation Considerations"
+    Automated cache purging is intentionally deferred to avoid adding API tokens and third-party build dependencies to the static Pages publishing workflow. If architecture diagram updates become high-frequency, future options include:
+
+    - Adding a scoped Cloudflare Cache Purge GitHub Action step to `.github/workflows/pages.yml` (using an API token restricted to `Zone.Cache Purge` for `docs.hasb.dev/*`).
+    - Adopting content-hashed / fingerprinted asset filenames (e.g. `final-project-end-state.<hash>.html`) to bypass edge caching automatically.
 
 ### Live Integration Evidence
 

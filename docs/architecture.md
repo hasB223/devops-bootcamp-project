@@ -1,6 +1,6 @@
 # System Architecture Specification
 
-Status: verified
+**Verification scope:** Checked against current Terraform, Ansible, Cloudflare IaC, CI/CD workflows, and captured live integration evidence.
 
 This document specifies the end-to-end system architecture, network topology, security boundaries, and data flows of the DevOps platform deployed on Amazon Web Services (AWS) and exposed through Cloudflare under the domain `hasb.dev`.
 
@@ -9,6 +9,7 @@ This document specifies the end-to-end system architecture, network topology, se
 ## Purpose
 
 The platform delivers a secure, containerized web application alongside an isolated observability stack. Key architectural goals include:
+
 - **Zero Inbound SSH from Internet**: Administrative access to private and public instances is mediated exclusively through AWS Systems Manager (SSM) Session Manager.
 - **Strict Network Segmentation**: Publicly facing web compute is separated from internal orchestration and monitoring workloads via RFC 1918 subnets.
 - **Zero Inbound Public Ports for Observability**: The monitoring server resides entirely within a private subnet without an Elastic IP or public inbound security group rules, exposed securely via an outbound Cloudflare Zero Trust Tunnel.
@@ -94,7 +95,7 @@ The network layer is provisioned via Terraform in the AWS Singapore region (`ap-
 
 ## Compute Topology & Server Roles
 
-All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on 64-bit ARM architecture (`t4g.small`):
+All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on amd64 architecture. Live integration and rehearsal runs used `t3.small` for all three nodes via the Terraform `instance_type` variable:
 
 ### 1. Web Server (`10.0.0.5`)
 - **Placement**: Public Subnet (`10.0.0.0/25`).
@@ -165,8 +166,8 @@ Security groups enforce least-privilege traffic flow across instances:
 | **`monitoring-server-sg`** | `10.0.0.136/32` (Self) | Ports 3000, 9090 (TCP) | Inter-container metrics flow and local tunnel ingress |
 | **`controller-sg`** | None (Zero inbound rules) | None | Controller accepts no inbound connections; access is SSM-only |
 
-> [!NOTE]
-> **Evolution from Baseline**: In the baseline implementation, the Controller connected to targets over internal VPC SSH (port 22). Under the **Ansible over SSM (+3%)** bonus track, all management was migrated to the `amazon.aws.aws_ssm` transport plugin, completely removing port 22 inbound rules in the default state. Emergency break-glass SSH can be temporarily restored by deploying with `-var="enable_ssh_ingress=true"`.
+!!! note "Evolution from Baseline"
+    In the baseline implementation, the Controller connected to targets over internal VPC SSH (port 22). Under the **Ansible over SSM (+3%)** bonus track, all management was migrated to the `amazon.aws.aws_ssm` transport plugin, completely removing port 22 inbound rules in the default state. Emergency break-glass SSH can be temporarily restored by deploying with `-var="enable_ssh_ingress=true"`.
 
 ### Security Group Egress Rules
 - All security groups allow outbound traffic (`0.0.0.0/0`) for package updates, container image pulls from ECR, and outbound Cloudflare tunnel traffic via the NAT Gateway or Internet Gateway.

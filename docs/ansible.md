@@ -7,6 +7,7 @@ This document describes the automated configuration management layer for the Dev
 ## Purpose
 
 This layer automates server provisioning, container runtime setup, and application deployment across AWS instances:
+
 - **Centralized Execution**: All configurations are initiated strictly from the private **Ansible Controller** (`10.0.0.135`), not from local engineer workstations.
 - **Role-Based Docker Installation**: Uses the battle-tested, official Ansible Galaxy role `geerlingguy.docker` to deploy and manage Docker Engine and Compose plugins.
 - **Private ECR Integration**: Authenticates to AWS Elastic Container Registry (ECR) using EC2 IAM instance profile credentials (no hardcoded static keys).
@@ -51,8 +52,8 @@ This layer automates server provisioning, container runtime setup, and applicati
             +------------------------------------+    +------------------------------------+
 ```
 
-> [!NOTE]
-> **Evolution from Baseline**: The capstone baseline initially utilized internal VPC SSH (`port 22`) from the Ansible Controller. Under the **Ansible over SSM (+3%)** track, transport was upgraded to `amazon.aws.aws_ssm` over encrypted AWS SSM HTTPS endpoints, allowing port 22 to be closed by default in all security groups.
+!!! note "Evolution from Baseline"
+    The capstone baseline initially utilized internal VPC SSH (`port 22`) from the Ansible Controller. Under the **Ansible over SSM (+3%)** track, transport was upgraded to `amazon.aws.aws_ssm` over encrypted AWS SSM HTTPS endpoints, allowing port 22 to be closed by default in all security groups.
 
 ---
 
@@ -317,8 +318,8 @@ The Ansible Controller role (`devops-controller-role`) is granted scoped permiss
 - `s3:GetBucketLocation` and `s3:ListBucket` on the bucket ARN (required for `HeadBucket` bucket-level region and accessibility validation by `amazon.aws.aws_ssm`).
 - `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` restricted strictly to `arn:aws:s3:::devops-bootcamp-ansible-ssm-hasb/i-*`.
 
-> [!NOTE]
-> `HeadBucket` checks bucket existence and region without passing an `s3:prefix` context key. Object payloads remain strictly isolated under the instance ID prefix `i-*`.
+!!! note
+    `HeadBucket` checks bucket existence and region without passing an `s3:prefix` context key. Object payloads remain strictly isolated under the instance ID prefix `i-*`.
 
 ### 5. Target Node Sudoers Bootstrap (Rebuild / Recovery Procedure)
 Target instances (`web` and `monitoring`) provisioned via Terraform automatically configure passwordless sudo for `ssm-user` via cloud-init `user_data` using a dedicated `ansible-admin` group. If target nodes are ever rebuilt or recovered manually without cloud-init, execute this one-time bootstrap from your workstation:

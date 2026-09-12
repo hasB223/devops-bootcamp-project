@@ -117,7 +117,7 @@ This documentation covers the end-to-end cloud infrastructure, Zero-Trust networ
 
     ---
 
-    Cloudflare Provider v5.24.0 automation: DNS records, Zero Trust Tunnel, and declarative configuration rulesets.
+    Cloudflare Provider v5 automation: DNS records, Zero Trust Tunnel, and declarative configuration rulesets.
 
 - __[Ansible Automation](ansible.md)__
 
