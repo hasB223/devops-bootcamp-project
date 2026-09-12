@@ -82,14 +82,17 @@ The network layer is provisioned via Terraform in the AWS Singapore region (`ap-
 | **Public Subnet** | `10.0.0.0/25` | 128 (123 usable) | Internet-facing workloads and NAT Gateway | Default route `0.0.0.0/0` -> Internet Gateway (`igw`) |
 | **Private Subnet** | `10.0.0.128/25` | 128 (123 usable) | Management controller and monitoring infrastructure | Default route `0.0.0.0/0` -> NAT Gateway (`nat`) |
 
-### Routing Table Configuration
+#### Routing Table Configuration
 
 1. **Public Route Table (`devops-public-rt`)**:
-   - `10.0.0.0/24` -> `local` (intra-VPC traffic)
-   - `0.0.0.0/0` -> `aws_internet_gateway.gw` (outbound internet access)
+
+    - `10.0.0.0/24` -> `local` (intra-VPC traffic)
+    - `0.0.0.0/0` -> `aws_internet_gateway.gw` (outbound internet access)
+
 2. **Private Route Table (`devops-private-rt`)**:
-   - `10.0.0.0/24` -> `local` (intra-VPC traffic)
-   - `0.0.0.0/0` -> `aws_nat_gateway.gw` (egress via NAT Gateway in public subnet)
+
+    - `10.0.0.0/24` -> `local` (intra-VPC traffic)
+    - `0.0.0.0/0` -> `aws_nat_gateway.gw` (egress via NAT Gateway in public subnet)
 
 ---
 
@@ -102,9 +105,9 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on amd64 architect
 - **Addressing**: Private IP `10.0.0.5` + AWS Elastic IP.
 - **Role**: Hosts the production Three.js containerized frontend.
 - **Runtime Components**:
-  - **Docker Engine**: Installed and managed via official Galaxy role `geerlingguy.docker`.
-  - **Web Application Container** (`devops-web-app`): Production Nginx runtime container exposing port 80.
-  - **Node Exporter Container** (`node-exporter`): Gathers host system metrics (CPU, memory, disk, network) on port 9100.
+    - **Docker Engine**: Installed and managed via official Galaxy role `geerlingguy.docker`.
+    - **Web Application Container** (`devops-web-app`): Production Nginx runtime container exposing port 80.
+    - **Node Exporter Container** (`node-exporter`): Gathers host system metrics (CPU, memory, disk, network) on port 9100.
 - **IAM Profile**: `devops-web-profile` (`devops-web-role`: `AmazonSSMManagedInstanceCore` + custom `devops-web-ecr-pull-policy` strictly scoped to the application ECR repository ARN).
 
 ### 2. Ansible Controller (`10.0.0.135`)
@@ -112,8 +115,8 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on amd64 architect
 - **Addressing**: Private IP `10.0.0.135` (Zero public IPs).
 - **Role**: Centralized configuration management engine. All configuration changes and application rollouts are initiated from this node.
 - **Runtime Components**:
-  - **Ansible Core**: Executes multi-play orchestrations against target hosts.
-  - **SSH Keypair**: Internal key (`devops-bootcamp-key`) authorized on target instances for VPC-internal management.
+    - **Ansible Core**: Executes multi-play orchestrations against target hosts.
+    - **SSH Keypair**: Internal key (`devops-bootcamp-key`) authorized on target instances for VPC-internal management.
 - **IAM Profile**: `devops-controller-profile` (`devops-controller-role`: `AmazonSSMManagedInstanceCore` + `devops-controller-ssm-policy` for scoped target SSM orchestration and S3 relay bucket access; zero ECR permissions).
 
 ### 3. Monitoring Server (`10.0.0.136`)
@@ -121,9 +124,9 @@ All compute instances run **Ubuntu 24.04 LTS (Noble Numbat)** on amd64 architect
 - **Addressing**: Private IP `10.0.0.136` (Zero public IPs).
 - **Role**: Metrics scraping, storage, visualization, and edge tunneling.
 - **Runtime Components**:
-  - **Prometheus** (`prom/prometheus:v2.53.0`): Scrapes metrics from `10.0.0.5:9100` every 15s; binds internally to port 9090.
-  - **Grafana** (`grafana/grafana:11.1.0`): Visualizes metrics on port 3000; pre-configured with declarative Prometheus data source and curated Node Exporter dashboard.
-  - **Cloudflare Connector** (`cloudflare/cloudflared:2024.8.3`): Outbound Zero Trust Tunnel daemon connecting to Cloudflare Edge.
+    - **Prometheus** (`prom/prometheus:v2.53.0`): Scrapes metrics from `10.0.0.5:9100` every 15s; binds internally to port 9090.
+    - **Grafana** (`grafana/grafana:11.1.0`): Visualizes metrics on port 3000; pre-configured with declarative Prometheus data source and curated Node Exporter dashboard.
+    - **Cloudflare Connector** (`cloudflare/cloudflared:2024.8.3`): Outbound Zero Trust Tunnel daemon connecting to Cloudflare Edge.
 - **IAM Profile**: `devops-monitoring-profile` (`devops-monitoring-role`: `AmazonSSMManagedInstanceCore`; zero ECR permissions, zero S3 relay permissions).
 
 ---
@@ -223,10 +226,15 @@ Developer Push / PR
 ## Failure Modes & Operational Boundaries
 
 1. **Host Failure (Web Server)**:
-   - The web container is stateless. Re-running the Ansible playbook on a newly provisioned instance immediately restores the service.
-   - The Elastic IP can be dynamically re-associated with a replacement instance without changing DNS records.
+
+    - The web container is stateless. Re-running the Ansible playbook on a newly provisioned instance immediately restores the service.
+    - The Elastic IP can be dynamically re-associated with a replacement instance without changing DNS records.
+
 2. **Monitoring Failure**:
-   - Grafana dashboard definitions and datasource configurations are provisioned declaratively from files in `ansible/files/monitoring/`.
-   - Historical time-series data is stored in the Docker volume `grafana-data`. Re-deploying containers preserves dashboards and user sessions.
+
+    - Grafana dashboard definitions and datasource configurations are provisioned declaratively from files in `ansible/files/monitoring/`.
+    - Historical time-series data is stored in the Docker volume `grafana-data`. Re-deploying containers preserves dashboards and user sessions.
+
 3. **NAT Gateway Dependency**:
-   - The private subnet relies on the NAT Gateway for outbound connectivity (apt updates, ECR pulls, Cloudflare tunnel). If the NAT Gateway is deleted to save costs, private instances retain local VPC connectivity but cannot reach external endpoints until the NAT Gateway is reprovisioned.
+
+    - The private subnet relies on the NAT Gateway for outbound connectivity (apt updates, ECR pulls, Cloudflare tunnel). If the NAT Gateway is deleted to save costs, private instances retain local VPC connectivity but cannot reach external endpoints until the NAT Gateway is reprovisioned.

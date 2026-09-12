@@ -154,13 +154,16 @@ Containerized stateful applications often behave differently on Day 0 (empty vol
 
 * **The Day-2 Volume Quirk**: When Grafana starts with an empty SQLite volume (`grafana-data`), it initializes its admin account from `GF_SECURITY_ADMIN_PASSWORD`. However, when secrets are rotated in Infisical and the stack is restarted, Grafana intentionally preserves the password stored in its internal SQLite database (`/var/lib/grafana/grafana.db`) to avoid overwriting web UI configurations.
 * **Automated Playbook Synchronization**: Rather than requiring manual container shell resets or exposing passwords in SSM command parameters, `ansible/playbook.yml` Play 3 implements automated, idempotent Day-2 credential synchronization:
-  1. **Authentication Probe**: Tests live basic auth against `/api/user/preferences` using `grafana_admin_password`. If authentication succeeds (`HTTP 200`), the synchronization step is skipped (`changed=0`).
-  2. **In-Container Password Reset**: If authentication returns `HTTP 401 Unauthorized`, the playbook executes `docker exec -i grafana grafana-cli admin reset-admin-password --password-from-stdin` via standard input (`stdin`). This updates SQLite directly inside the container without restarting the service (`changed=1`).
-  3. **Verification Assertion**: Verifies that subsequent authentication requests succeed (`HTTP 200`).
+
+    1. **Authentication Probe**: Tests live basic auth against `/api/user/preferences` using `grafana_admin_password`. If authentication succeeds (`HTTP 200`), the synchronization step is skipped (`changed=0`).
+    2. **In-Container Password Reset**: If authentication returns `HTTP 401 Unauthorized`, the playbook executes `docker exec -i grafana grafana-cli admin reset-admin-password --password-from-stdin` via standard input (`stdin`). This updates SQLite directly inside the container without restarting the service (`changed=1`).
+    3. **Verification Assertion**: Verifies that subsequent authentication requests succeed (`HTTP 200`).
+
 * **Zero-Exposure Guarantees**:
-  - `no_log: true` suppresses credential printing in Ansible task output and log files.
-  - `--password-from-stdin` prevents passwords from appearing in `/proc`, `ps aux`, or process tables.
-  - In Ansible over SSM transport, tasks execute via the S3 relay bucket directly to Python on the target host; zero plain-text secrets enter AWS SSM command history or CloudTrail audit logs.
+
+    - `no_log: true` suppresses credential printing in Ansible task output and log files.
+    - `--password-from-stdin` prevents passwords from appearing in `/proc`, `ps aux`, or process tables.
+    - In Ansible over SSM transport, tasks execute via the S3 relay bucket directly to Python on the target host; zero plain-text secrets enter AWS SSM command history or CloudTrail audit logs.
 
 ## Safety Rules
 

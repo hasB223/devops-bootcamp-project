@@ -89,7 +89,8 @@ The CI workflow acts as a mandatory pre-merge quality gate. It executes on every
 [Pass / Fail]
 ```
 
-#### Steps Executed:
+#### Steps Executed
+
 1. **Terraform Format Check**: `terraform -chdir=terraform fmt -check` enforces canonical formatting.
 2. **Backendless Initialization**: `terraform -chdir=terraform init -backend=false` prepares provider plugins without requiring S3 bucket access or AWS credentials.
 3. **Terraform Validation**: `terraform -chdir=terraform validate` verifies syntax and resource argument validity.
@@ -112,7 +113,8 @@ The CI workflow acts as a mandatory pre-merge quality gate. It executes on every
 
 This workflow packages the containerized application and publishes it to AWS Private ECR.
 
-#### Trigger & Path Filter:
+#### Trigger & Path Filter
+
 - Fires on `push` to `main` **only** when files under `app/**` or the workflow itself change:
   ```yaml
   paths:
@@ -121,7 +123,8 @@ This workflow packages the containerized application and publishes it to AWS Pri
   ```
 - Can also be manually invoked via `workflow_dispatch`.
 
-#### Workflow Execution Flow:
+#### Workflow Execution Flow
+
 1. **OIDC Authentication**: `aws-actions/configure-aws-credentials@v4` requests a signed JWT from GitHub's OIDC provider and exchanges it for temporary AWS STS credentials using `role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}`.
 2. **ECR Login**: `aws-actions/amazon-ecr-login@v2` authenticates Docker Engine to the private ECR registry.
 3. **Container Build**: Builds the container using `app/Dockerfile` with the `app/` directory as context:
@@ -143,19 +146,22 @@ This workflow packages the containerized application and publishes it to AWS Pri
 
 This workflow publishes the interactive documentation portal (`docs/index.html`, runbooks, and embedded architecture diagrams) to GitHub Pages.
 
-#### Trigger:
+#### Trigger
+
 - Fires on `push` to `main` when documentation files change (`docs/**`, `README.md`, `.github/workflows/pages.yml`), or via `workflow_dispatch`.
 
-#### Concurrency & Permissions:
+#### Concurrency & Permissions
+
 - Permissions: `pages: write`, `id-token: write`, `contents: read`.
 - Concurrency group `pages` with `cancel-in-progress: false` ensures sequential, reliable publishing.
 
-#### Workflow Execution Flow:
+#### Workflow Execution Flow
+
 1. Configures Pages runtime with `actions/configure-pages@v5`.
 2. Packages the `docs/` directory as an artifact with `actions/upload-pages-artifact@v3`.
 3. Deploys the artifact to the GitHub Pages environment via `actions/deploy-pages@v4`.
 
-#### CDN Edge Caching & Invalidation:
+#### CDN Edge Caching & Invalidation
 
 The documentation portal is accelerated by Cloudflare edge caching backed by the GitHub Pages origin (`max-age=600`). Canonical URLs may briefly serve cached responses following deployment until edge TTLs expire. For major visual releases (such as Archify diagrams or homepage previews), follow the manual single-file Cloudflare purge procedure documented in the [Operational Runbook](runbook.md#documentation-portal-deployment-cdn-cache-invalidation).
 
@@ -207,11 +213,14 @@ gh variable set ECR_REPOSITORY --body "devops-bootcamp/final-project-hasb"
 ### 3. Enable GitHub Pages & Custom Domain
 
 Configure GitHub Pages to deploy from GitHub Actions with the branded domain:
+
 1. In the repository, navigate to **Settings** -> **Pages**.
 2. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
 3. Under **Custom domain**, configure `docs.hasb.dev`.
-   - **Source of Truth**: The repository Pages custom-domain setting (configured via repository Settings or `gh api repos/{owner}/{repo}/pages -f cname="docs.hasb.dev"`) is the active domain binding and certificate trigger.
-   - **Artifact Tracking**: `docs/CNAME` records the intended custom domain in the deployed docs artifact to keep configuration aligned in Git, but for GitHub Actions-based Pages deployment, it should not be described as the sole mechanism that binds the domain.
+
+    - **Source of Truth**: The repository Pages custom-domain setting (configured via repository Settings or `gh api repos/{owner}/{repo}/pages -f cname="docs.hasb.dev"`) is the active domain binding and certificate trigger.
+    - **Artifact Tracking**: `docs/CNAME` records the intended custom domain in the deployed docs artifact to keep configuration aligned in Git, but for GitHub Actions-based Pages deployment, it should not be described as the sole mechanism that binds the domain.
+
 4. Once DNS verification completes and the TLS certificate is issued, ensure **Enforce HTTPS** is checked.
 
 ---
@@ -239,6 +248,7 @@ npm run build
 ```
 
 Expected output:
+
 - `terraform validate`: `Success! The configuration is valid.`
 - `ansible-playbook --syntax-check`: `playbook: ansible/playbook.yml` with exit code 0.
 - `npm run test`: `✓ pre-flight OK — "Nebula Runner" cleared for launch`.
@@ -247,6 +257,7 @@ Expected output:
 ### 2. Actions Workflow Execution Verification
 
 After pushing or merging to `main`:
+
 1. Navigate to repository **Actions** tab.
 2. Confirm `CI Quality Gate` passes on the pull request.
 3. Confirm `Deploy Documentation to GitHub Pages` completes with green check.

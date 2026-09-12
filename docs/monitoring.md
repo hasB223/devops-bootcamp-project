@@ -53,7 +53,8 @@ The monitoring layer provides metrics collection, alerting foundations, and visu
   +-----------------------------------------------------------------------------------------+
 ```
 
-### Metrics Chain Overview:
+### Metrics Chain Overview
+
 1. `node_exporter` on `10.0.0.5:9100` exposes machine metrics.
 2. Prometheus on `10.0.0.136:9090` polls `http://10.0.0.5:9100/metrics` every 15s via the VPC private network.
 3. Grafana on `10.0.0.136:3000` queries Prometheus via Docker container network (`http://prometheus:9090`) and renders operational panels.
@@ -107,6 +108,7 @@ ansible/
 ## Secret & Credential Direction
 
 The Grafana admin password is **never** committed or hardcoded in version control:
+
 - In `ansible/group_vars/all.yml`, `grafana_admin_password` resolves dynamically from the `GRAFANA_ADMIN_PASSWORD` environment variable:
   ```yaml
   grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL', true) }}"
@@ -154,14 +156,17 @@ ansible-playbook playbook.yml
 ```
 
 **Playbook Actions for Monitoring:**
+
 1. **Web Server (`web`)**: Deploys `prom/node-exporter:v1.8.2` container with `/proc` and `/sys` mounts, verifies `http://127.0.0.1:9100/metrics` returns HTTP 200.
+
 2. **Monitoring Server (`monitoring`)**:
-   - Creates `/opt/monitoring` directory hierarchy.
-   - Deploys `prometheus.yaml` with scrape target `10.0.0.5:9100`.
-   - Copies automated Grafana provisioning definitions (datasource and dashboard).
-   - Deploys `compose.yaml` declaring `prometheus`, `grafana`, and named volume `grafana-data`.
-   - Launches containers via `docker compose up -d`.
-   - Validates health endpoints on ports 9090 and 3000.
+
+    - Creates `/opt/monitoring` directory hierarchy.
+    - Deploys `prometheus.yaml` with scrape target `10.0.0.5:9100`.
+    - Copies automated Grafana provisioning definitions (datasource and dashboard).
+    - Deploys `compose.yaml` declaring `prometheus`, `grafana`, and named volume `grafana-data`.
+    - Launches containers via `docker compose up -d`.
+    - Validates health endpoints on ports 9090 and 3000.
 
 ---
 

@@ -117,6 +117,7 @@ terraform plan
 ```
 
 Verify that:
+
 - 1 VPC, 2 Subnets, 1 IGW, 1 NAT Gateway, 2 Route Tables are planned
 - 2 Security groups (`devops-public-sg` with port 80 public & 9100 restricted to `10.0.0.136`; `devops-private-sg`)
 - 3 EC2 instances with assigned IPs (`10.0.0.5`, `10.0.0.135`, `10.0.0.136`)
