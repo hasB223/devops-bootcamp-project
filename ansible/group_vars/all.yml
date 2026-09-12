@@ -33,6 +33,7 @@ docker_users:
 monitoring_stack_dir: "/opt/monitoring"
 
 # Node Exporter (Web Server: 10.0.0.5)
+node_exporter_host: "10.0.0.5"
 node_exporter_port: 9100
 node_exporter_image: "prom/node-exporter:v1.8.2"
 

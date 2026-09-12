@@ -58,6 +58,10 @@ The monitoring layer provides metrics collection, alerting foundations, and visu
 2. Prometheus on `10.0.0.136:9090` polls `http://10.0.0.5:9100/metrics` every 15s via the VPC private network.
 3. Grafana on `10.0.0.136:3000` queries Prometheus via Docker container network (`http://prometheus:9090`) and renders operational panels.
 
+!!! note "Deterministic Datasource UID & SSM Inventory Decoupling"
+    - **Datasource UID Matching**: The curated dashboard JSON expects datasource UID `"Prometheus"`. Declarative provisioning explicitly sets `uid: Prometheus` in `datasources/prometheus.yaml` so Grafana does not generate a random internal UID on initial volume creation.
+    - **Scrape Target Decoupling**: Under Ansible SSM transport (`amazon.aws.aws_ssm`), `ansible_host` contains the AWS Instance ID (`i-...`). The Prometheus template decouples scrape routing by resolving `node_exporter_host` (`10.0.0.5`) or host `private_ip`, preventing unresolvable EC2 instance IDs from entering Docker DNS.
+
 ---
 
 ## Security & Network Boundaries
