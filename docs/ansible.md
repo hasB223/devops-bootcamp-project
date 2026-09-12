@@ -209,6 +209,7 @@ ansible-playbook playbook.yml
 ```
 
 **Execution Flow:**
+
 1. **Play 1 (`targets`)**: Updates package caches, installs prerequisites (`python3-docker`, `curl`, AWS CLI v2), runs `geerlingguy.docker` to install Docker CE, and enables the systemd service.
 2. **Play 2 (`web`)**: Uses the web server's IAM instance profile to obtain an ECR authorization token, logs into the private registry, pulls `devops-bootcamp/final-project-hasb:latest`, starts container `devops-web-app` bound to port 80, and checks HTTP 200 response.
 3. **Play 3 (`monitoring`)**: Verifies Docker daemon functionality on the monitoring server and provisions `/opt/monitoring` for the future Prometheus/Grafana stack.
@@ -264,7 +265,9 @@ Connection: keep-alive
 To satisfy the **+3% bonus** for running Ansible without port 22 open:
 
 ### 1. Transport Architecture
+
 Ansible uses the official `amazon.aws.aws_ssm` connection plugin to execute tasks and modules via AWS Systems Manager Session Manager WebSocket connections (`ssm:StartSession`, `ssm:TerminateSession`) over HTTPS 443:
+
 - **Zero Port 22 Ingress**: Port 22 is completely closed by default in `devops-public-sg` and `devops-private-sg`.
 - **Dedicated S3 Transit Relay**: A dedicated bucket (`devops-bootcamp-ansible-ssm-hasb`) is provisioned with versioning explicitly suspended and a 1-day lifecycle purge rule.
 - **S3 VPC Gateway Endpoint**: An `aws_vpc_endpoint.s3` gateway endpoint routes all S3 traffic across the private AWS network at zero cost ($0.00/mo), bypassing NAT data transfer fees.
@@ -311,7 +314,9 @@ ansible_python_interpreter=/usr/bin/python3
 ```
 
 ### 4. IAM Scoping & Prefix Isolation
+
 The Ansible Controller role (`devops-controller-role`) is granted scoped permissions:
+
 - `ssm:StartSession`, `ssm:SendCommand` strictly on target instance ARNs and standard SSM documents.
 - `ssm:TerminateSession`, `ssm:ResumeSession`, `ssm:DescribeInstanceInformation` for session lifecycle management.
 - `ssmmessages:CreateControlChannel`, `ssmmessages:CreateDataChannel`, `ssmmessages:OpenControlChannel`, `ssmmessages:OpenDataChannel` on `*` (required by AWS Session Manager client to open WebSocket communication channels).

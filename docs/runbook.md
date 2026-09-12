@@ -56,31 +56,39 @@ aws sts get-caller-identity
 ### Step 1: Terraform Infrastructure Provisioning
 
 1. **Navigate to Terraform directory and initialize backend**:
-   ```bash
-   cd terraform
-   terraform init
-   ```
+
+    ```bash
+    cd terraform
+    terraform init
+    ```
+
 2. **Review execution plan**:
-   ```bash
-   terraform plan
-   ```
-   Confirm planned resources: VPC (`10.0.0.0/24`), public subnet (`10.0.0.0/25`), private subnet (`10.0.0.128/25`), Internet Gateway, NAT Gateway, 3 EC2 instances (`web`, `controller`, `monitoring`), ECR repository, and IAM OIDC provider/roles.
+
+    ```bash
+    terraform plan
+    ```
+
+    Confirm planned resources: VPC (`10.0.0.0/24`), public subnet (`10.0.0.0/25`), private subnet (`10.0.0.128/25`), Internet Gateway, NAT Gateway, 3 EC2 instances (`web`, `controller`, `monitoring`), ECR repository, and IAM OIDC provider/roles.
 
 3. **Apply infrastructure**:
-   ```bash
-   terraform apply
-   ```
+
+    ```bash
+    terraform apply
+    ```
 
 4. **Record output values**:
-   ```bash
-   terraform output
-   ```
-   Key outputs:
-   - `web_public_ip`: Elastic IP of the Web Server
-   - `controller_private_ip`: `10.0.0.135`
-   - `monitoring_private_ip`: `10.0.0.136`
-   - `ecr_repository_url`: `164824552037.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hasb`
-   - `github_actions_role_arn`: `arn:aws:iam::164824552037:role/devops-github-actions-role`
+
+    ```bash
+    terraform output
+    ```
+
+    Key outputs:
+
+    - `web_public_ip`: Elastic IP of the Web Server
+    - `controller_private_ip`: `10.0.0.135`
+    - `monitoring_private_ip`: `10.0.0.136`
+    - `ecr_repository_url`: `164824552037.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hasb`
+    - `github_actions_role_arn`: `arn:aws:iam::164824552037:role/devops-github-actions-role`
 
 ---
 
@@ -197,41 +205,49 @@ Configuration orchestration is executed strictly from the **Ansible Controller**
 From the Ansible Controller or via SSM on the Monitoring Server (`10.0.0.136`):
 
 1. **Verify Prometheus scrape health**:
-   ```bash
-   curl -s http://10.0.0.136:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, instance: .labels.instance, health: .health}'
-   ```
-   Expected output:
-   - `job: "web-server"`, `instance: "10.0.0.5:9100"`, `health: "up"`
-   - `job: "prometheus"`, `instance: "localhost:9090"`, `health: "up"`
+
+    ```bash
+    curl -s http://10.0.0.136:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, instance: .labels.instance, health: .health}'
+    ```
+
+    Expected output:
+
+    - `job: "web-server"`, `instance: "10.0.0.5:9100"`, `health: "up"`
+    - `job: "prometheus"`, `instance: "localhost:9090"`, `health: "up"`
 
 2. **Verify Grafana health endpoint**:
-   ```bash
-   curl -s http://10.0.0.136:3000/api/health
-   ```
-   Expected: `{"commit":"...","database":"ok","version":"11.1.0"}`.
+
+    ```bash
+    curl -s http://10.0.0.136:3000/api/health
+    ```
+
+    Expected: `{"commit":"...","database":"ok","version":"11.1.0"}`.
 
 3. **Verify Grafana admin authentication & Day-2 sync**:
-   ```bash
-   curl -s -u "admin:<GRAFANA_ADMIN_PASSWORD>" http://10.0.0.136:3000/api/user/preferences | jq .
-   ```
-   Expected: Returns user preferences JSON with `HTTP 200 OK`. If `GRAFANA_ADMIN_PASSWORD` was rotated in Infisical, executing `ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml` automatically updates the internal database via in-container `grafana-cli` without manual shell commands or password exposure.
 
+    ```bash
+    curl -s -u "admin:<GRAFANA_ADMIN_PASSWORD>" http://10.0.0.136:3000/api/user/preferences | jq .
+    ```
+
+    Expected: Returns user preferences JSON with `HTTP 200 OK`. If `GRAFANA_ADMIN_PASSWORD` was rotated in Infisical, executing `ansible-playbook -i ansible/inventory-ssm.ini ansible/playbook.yml` automatically updates the internal database via in-container `grafana-cli` without manual shell commands or password exposure.
 
 ---
 
 ### Step 5: Cloudflare Edge Routing & Tunnel Activation
 
 1. **DNS A-Record for Web**:
-   - In Cloudflare Dashboard (**DNS** -> **Records**):
-     - Name: `web`
-     - IPv4 Address: `<web_public_ip>` (Elastic IP)
-     - Proxy status: **Proxied** (Orange Cloud)
+
+    - In Cloudflare Dashboard (**DNS** -> **Records**):
+        - Name: `web`
+        - IPv4 Address: `<web_public_ip>` (Elastic IP)
+        - Proxy status: **Proxied** (Orange Cloud)
 
 2. **Zero Trust Tunnel for Monitoring**:
-   - In Cloudflare Zero Trust Dashboard (**Networks** -> **Tunnels**):
-     - Tunnel name: `devops-monitoring-tunnel`
-     - Public Hostname: `monitoring.hasb.dev`
-     - Service: `HTTP` -> `localhost:3000`
+
+    - In Cloudflare Zero Trust Dashboard (**Networks** -> **Tunnels**):
+        - Tunnel name: `devops-monitoring-tunnel`
+        - Public Hostname: `monitoring.hasb.dev`
+        - Service: `HTTP` -> `localhost:3000`
 
 ---
 
@@ -259,6 +275,7 @@ nc -z -w 3 monitoring.hasb.dev 3000 || echo "Port 3000 closed as expected"
 ```
 
 Expected responses:
+
 - `https://web.hasb.dev`: `HTTP/2 200`
 - `https://monitoring.hasb.dev`: `HTTP/2 200` or `302` (Redirect to Grafana `/login`)
 - `https://docs.hasb.dev`: `HTTP/2 200`
@@ -286,9 +303,10 @@ Target canonical URLs to purge:
 - `https://docs.hasb.dev/assets/final-project-end-state.html`
 - `https://docs.hasb.dev/assets/secrets-management.html`
 - Any updated visual-check PNG/SVG assets, e.g.:
-  - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.light.png`
-  - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.dark.png`
-  - `https://docs.hasb.dev/assets/end-state-topology-summary.light.svg`
+
+    - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.light.png`
+    - `https://docs.hasb.dev/assets/final-project-end-state.visual-check.1440x900.dark.png`
+    - `https://docs.hasb.dev/assets/end-state-topology-summary.light.svg`
 
 **Cloudflare Dashboard Navigation**:
 `Cloudflare Dashboard -> hasb.dev -> Caching -> Configuration -> Purge Cache -> Custom Purge -> URL`
@@ -353,6 +371,7 @@ Parked monthly cost is **~$8.55/month** (EBS storage ~$4.80 + Web EIP IPv4 charg
 #### Option A: Automated CLI via Makefile / Python (Recommended)
 
 The platform includes a dedicated lifecycle engine with built-in safeguards:
+
 - **Self-Termination Guard**: Prevents stopping your own session if executed from `ansible-controller`.
 - **5-Resource Network Dependency Awareness**: Tracks `aws_eip.nat`, `aws_nat_gateway.gw`, `aws_route_table.private`, `aws_route_table_association.private`, and `aws_vpc_endpoint.s3`.
 - **Unpark Plan Guard**: Inspects `terraform plan` output and blocks execution if foreign changes or destructive replacements appear.
@@ -381,14 +400,14 @@ make unpark
 #### Option B: GitHub Actions Workflow (Browser / Mobile)
 
 You can trigger lifecycle operations directly from GitHub without needing local AWS CLI credentials:
+
 1. Navigate to **Actions** -> **Platform Lifecycle Automation**.
 2. Click **Run workflow**.
 3. Select the desired **Action** (`status`, `health`, `park`, `unpark`).
 4. Toggle `dry_run: true` to preview the planned changes in GitHub Actions logs without making live modifications.
 
-> [!NOTE]
-> **Optional Nightly Auto-Park Protection**:
-> A scheduled cron runs at `00:00 SGT` (`16:00 UTC`). It is protected by the repository variable `vars.AUTO_PARK_ENABLED`. By default, it is inactive (`false`). If you wish to enable automatic nightly shutdown to prevent accidental overnight spend, set `AUTO_PARK_ENABLED = "true"` under repository **Settings -> Secrets and variables -> Actions -> Variables**. Scheduled executions strictly force the `park` action; unparking is never permitted on schedule.
+!!! note "Optional Nightly Auto-Park Protection"
+    A scheduled cron runs at `00:00 SGT` (`16:00 UTC`). It is protected by the repository variable `vars.AUTO_PARK_ENABLED`. By default, it is inactive (`false`). If you wish to enable automatic nightly shutdown to prevent accidental overnight spend, set `AUTO_PARK_ENABLED = "true"` under repository **Settings -> Secrets and variables -> Actions -> Variables**. Scheduled executions strictly force the `park` action; unparking is never permitted on schedule.
 
 ---
 
@@ -447,8 +466,9 @@ When the entire environment is no longer needed:
    ```
 
 3. **Important Persistence Clarification**:
-   - `terraform destroy` tears down **all resources managed in the state**, including all EC2 instances, the Elastic IP, the NAT Gateway, the VPC, subnets, security groups, the ECR repository, and the IAM OIDC provider and roles.
-   - The S3 remote state bucket (`devops-bootcamp-terraform-hasb`) persists independently and retains the versioned `.tfstate` files.
+
+    - `terraform destroy` tears down **all resources managed in the state**, including all EC2 instances, the Elastic IP, the NAT Gateway, the VPC, subnets, security groups, the ECR repository, and the IAM OIDC provider and roles.
+    - The S3 remote state bucket (`devops-bootcamp-terraform-hasb`) persists independently and retains the versioned `.tfstate` files.
 
 ---
 
@@ -482,18 +502,21 @@ When the entire environment is no longer needed:
 ### 4. Grafana Dashboard Displays "No Data"
 - **Symptom**: `https://monitoring.hasb.dev` dashboard panels show "No data" while services are running.
 - **Cause**:
-  1. Prometheus scrape target misconfigured with an AWS Instance ID (`i-...`) rather than a reachable VPC private IP (`10.0.0.5:9100`).
-  2. Grafana datasource UID does not match the dashboard definition (`uid: Prometheus`).
-  3. The time range filter covers an interval where the EC2 fleet was parked (stopped).
+
+    1. Prometheus scrape target misconfigured with an AWS Instance ID (`i-...`) rather than a reachable VPC private IP (`10.0.0.5:9100`).
+    2. Grafana datasource UID does not match the dashboard definition (`uid: Prometheus`).
+    3. The time range filter covers an interval where the EC2 fleet was parked (stopped).
+
 - **Resolution**:
-  1. Verify Prometheus target health:
-     ```bash
-     curl -s http://127.0.0.1:9090/api/v1/targets | grep -o '"health":"[^"]*"'
-     ```
-     Target `node_exporter` must report `"health":"up"`. Ensure `/opt/monitoring/prometheus.yaml` targets `10.0.0.5:9100`.
-  2. Verify Grafana datasource UID:
-     ```bash
-     curl -s http://127.0.0.1:3000/api/datasources/uid/Prometheus
-     ```
-     Must return HTTP 200 with `"uid":"Prometheus"`.
-  3. Ensure the dashboard time range is set to active runtime (e.g. "Last 5 minutes").
+
+    1. Verify Prometheus target health:
+       ```bash
+       curl -s http://127.0.0.1:9090/api/v1/targets | grep -o '"health":"[^"]*"'
+       ```
+       Target `node_exporter` must report `"health":"up"`. Ensure `/opt/monitoring/prometheus.yaml` targets `10.0.0.5:9100`.
+    2. Verify Grafana datasource UID:
+       ```bash
+       curl -s http://127.0.0.1:3000/api/datasources/uid/Prometheus
+       ```
+       Must return HTTP 200 with `"uid":"Prometheus"`.
+    3. Ensure the dashboard time range is set to active runtime (e.g. "Last 5 minutes").

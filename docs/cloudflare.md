@@ -62,20 +62,20 @@ layers:
 ```
 
 - **Control Plane**:
-  - DNS zone records and proxy modes.
-  - Zero Trust Tunnel registration and tunnel secret generation.
-  - Ingress hostname routing rules on Cloudflare's edge.
-  - In this baseline, control-plane resources are configured via the Cloudflare Web
-    Console.
+    - DNS zone records and proxy modes.
+    - Zero Trust Tunnel registration and tunnel secret generation.
+    - Ingress hostname routing rules on Cloudflare's edge.
+    - In this baseline, control-plane resources are configured via the Cloudflare Web
+      Console.
 - **Data Plane (Connector Runtime)**:
-  - The `cloudflared` agent running as a Docker container on the Monitoring EC2
-    instance.
-  - Automated idempotently via Ansible Play 4 on the `monitoring` inventory host.
+    - The `cloudflared` agent running as a Docker container on the Monitoring EC2
+      instance.
+    - Automated idempotently via Ansible Play 4 on the `monitoring` inventory host.
 - **Secrets Management**:
-  - The tunnel connector token (`CLOUDFLARE_TUNNEL_TOKEN`) is stored securely in
-    Infisical Cloud (`/ansible`) or supplied via an ephemeral local environment
-    variable.
-  - Never committed to version control.
+    - The tunnel connector token (`CLOUDFLARE_TUNNEL_TOKEN`) is stored securely in
+      Infisical Cloud (`/ansible`) or supplied via an ephemeral local environment
+      variable.
+    - Never committed to version control.
 
 ---
 
@@ -106,15 +106,18 @@ layers:
 ## Prerequisites
 
 1. **Infisical & Local Fallback**:
-   - Setting up Infisical is not required to write or test playbook code.
-   - For live deployment of `cloudflared` on the monitoring server,
-     `CLOUDFLARE_TUNNEL_TOKEN` must be available either via Infisical CLI or exported
-     directly in the shell session.
+
+    - Setting up Infisical is not required to write or test playbook code.
+    - For live deployment of `cloudflared` on the monitoring server,
+      `CLOUDFLARE_TUNNEL_TOKEN` must be available either via Infisical CLI or exported
+      directly in the shell session.
+
 2. **Fail-Fast Security Guarantee**:
-   - The playbook enforces a preflight assertion on `CLOUDFLARE_TUNNEL_TOKEN`.
-   - If the variable is unset or remains set to the default placeholder
-     (`VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL`), execution halts immediately
-     with `no_log: true` before launching any Docker containers.
+
+    - The playbook enforces a preflight assertion on `CLOUDFLARE_TUNNEL_TOKEN`.
+    - If the variable is unset or remains set to the default placeholder
+      (`VAULT_MANAGED_PLACEHOLDER_INJECT_VIA_INFISICAL`), execution halts immediately
+      with `no_log: true` before launching any Docker containers.
 
 ---
 
@@ -123,83 +126,94 @@ layers:
 ### Part 1: Cloudflare DNS Setup for Web Application (`web.hasb.dev`)
 
 1. **Navigate to DNS Management**:
-   ```text
-   Cloudflare Dashboard -> Websites -> hasb.dev -> DNS -> Records
-   ```
+
+    ```text
+    Cloudflare Dashboard -> Websites -> hasb.dev -> DNS -> Records
+    ```
+
 2. **Create Web Application A-Record**:
-   - Click **Add record**.
-   - **Type**: `A`
-   - **Name**: `web` (resolves to `web.hasb.dev`)
-   - **IPv4 address**: Enter the Web Server Elastic IP (retrieved from `terraform output -raw web_public_ip`).
-   - **Proxy status**: Set to **Proxied** (Orange cloud icon).
-   - **TTL**: Auto.
-   - Click **Save**.
+
+    - Click **Add record**.
+    - **Type**: `A`
+    - **Name**: `web` (resolves to `web.hasb.dev`)
+    - **IPv4 address**: Enter the Web Server Elastic IP (retrieved from `terraform output -raw web_public_ip`).
+    - **Proxy status**: Set to **Proxied** (Orange cloud icon).
+    - **TTL**: Auto.
+    - Click **Save**.
 
 3. **Configure SSL/TLS Encryption Mode**:
-   ```text
-   Cloudflare Dashboard -> Websites -> hasb.dev -> SSL/TLS -> Overview
-   ```
-   - **Target / Production Mode**: `Full (strict)` is required when the
-     origin web server has an SSL/TLS certificate installed.
-   - **Lab / Current Phase Mode**: Because the Web Server Nginx container serves
-     plain HTTP on port 80 (origin certificates are not yet provisioned on the host),
-     select **Flexible** (or create a Configuration Rule for `web.hasb.dev` with
-     SSL set to `Flexible`).
-   - *Security Note*: `Flexible` encrypts traffic between the browser and Cloudflare
-     Edge, but transmits plain HTTP between Cloudflare Edge and the EC2 origin. When
-     custom origin certificates or Let's Encrypt are provisioned in later phases,
-     immediately switch to `Full (strict)`.
+
+    ```text
+    Cloudflare Dashboard -> Websites -> hasb.dev -> SSL/TLS -> Overview
+    ```
+
+    - **Target / Production Mode**: `Full (strict)` is required when the
+      origin web server has an SSL/TLS certificate installed.
+    - **Lab / Current Phase Mode**: Because the Web Server Nginx container serves
+      plain HTTP on port 80 (origin certificates are not yet provisioned on the host),
+      select **Flexible** (or create a Configuration Rule for `web.hasb.dev` with
+      SSL set to `Flexible`).
+    - *Security Note*: `Flexible` encrypts traffic between the browser and Cloudflare
+      Edge, but transmits plain HTTP between Cloudflare Edge and the EC2 origin. When
+      custom origin certificates or Let's Encrypt are provisioned in later phases,
+      immediately switch to `Full (strict)`.
 
 ---
 
 ### Part 2: Cloudflare Zero Trust Tunnel Setup for Monitoring (`monitoring.hasb.dev`)
 
 1. **Open Zero Trust Dashboard**:
-   ```text
-   Cloudflare Dashboard -> Zero Trust -> Networks -> Tunnels
-   ```
+
+    ```text
+    Cloudflare Dashboard -> Zero Trust -> Networks -> Tunnels
+    ```
+
 2. **Create New Tunnel**:
-   - Click **Create a tunnel**.
-   - Select connector type: **Cloudflared**.
-   - Click **Next**.
-   - **Tunnel name**: `devops-monitoring-tunnel`.
-   - Click **Save tunnel**.
+
+    - Click **Create a tunnel**.
+    - Select connector type: **Cloudflared**.
+    - Click **Next**.
+    - **Tunnel name**: `devops-monitoring-tunnel`.
+    - Click **Save tunnel**.
 
 3. **Capture Connector Token**:
-   - Under **Choose your environment**, select **Docker**.
-   - Locate the command snippet displayed in the console:
-     ```bash
-     docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <TOKEN_VALUE>
-     ```
-   - Copy only the `<TOKEN_VALUE>` string. This token contains the tunnel's
-     cryptographic credentials.
+
+    - Under **Choose your environment**, select **Docker**.
+    - Locate the command snippet displayed in the console:
+      ```bash
+      docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <TOKEN_VALUE>
+      ```
+    - Copy only the `<TOKEN_VALUE>` string. This token contains the tunnel's
+      cryptographic credentials.
 
 4. **Store Token in Infisical**:
-   - Store the token in Infisical Cloud under project `devops-bootcamp-project`,
-     environment `prod`, path `/ansible`:
-     ```bash
-     infisical secrets set \
-       --projectId="6c8dad30-9f25-44dd-ae65-08c06580ceed" \
-       --env=prod \
-       --path=/ansible \
-       CLOUDFLARE_TUNNEL_TOKEN="<TOKEN_VALUE>"
-     ```
-   - *Temporary shell fallback (if running without Infisical)*:
-     ```bash
-     export CLOUDFLARE_TUNNEL_TOKEN="<TOKEN_VALUE>"
-     ```
+
+    - Store the token in Infisical Cloud under project `devops-bootcamp-project`,
+      environment `prod`, path `/ansible`:
+      ```bash
+      infisical secrets set \
+        --projectId="6c8dad30-9f25-44dd-ae65-08c06580ceed" \
+        --env=prod \
+        --path=/ansible \
+        CLOUDFLARE_TUNNEL_TOKEN="<TOKEN_VALUE>"
+      ```
+    - *Temporary shell fallback (if running without Infisical)*:
+      ```bash
+      export CLOUDFLARE_TUNNEL_TOKEN="<TOKEN_VALUE>"
+      ```
 
 5. **Configure Public Hostname Ingress**:
-   - In the Cloudflare Zero Trust Tunnel creation wizard, click the **Public Hostnames** tab.
-   - Click **Add a public hostname**.
-   - **Public hostname settings**:
-     - **Subdomain**: `monitoring`
-     - **Domain**: `hasb.dev`
-     - **Path**: Leave empty
-   - **Service settings**:
-     - **Type**: `HTTP`
-     - **URL**: `localhost:3000` (or `127.0.0.1:3000`)
-   - Click **Save hostname**.
+
+    - In the Cloudflare Zero Trust Tunnel creation wizard, click the **Public Hostnames** tab.
+    - Click **Add a public hostname**.
+    - **Public hostname settings**:
+        - **Subdomain**: `monitoring`
+        - **Domain**: `hasb.dev`
+        - **Path**: Leave empty
+    - **Service settings**:
+        - **Type**: `HTTP`
+        - **URL**: `localhost:3000` (or `127.0.0.1:3000`)
+    - Click **Save hostname**.
 
 ---
 
@@ -247,6 +261,7 @@ ansible-playbook -i inventory.ini playbook.yml
     or execute the full playbook whenever domain variables change.
 
 The playbook executes:
+
 1. **Preflight Assertion**: Verifies `CLOUDFLARE_TUNNEL_TOKEN` is present, valid length (>= 30 characters), and non-placeholder (`no_log: true`).
 2. **Container Pull**: Fetches `cloudflare/cloudflared:2024.8.3`.
 3. **Container Launch**: Deploys `cloudflared` with `network_mode: host` and `restart_policy: unless-stopped`.
@@ -257,25 +272,28 @@ The playbook executes:
 ### Part 4: Cloudflare DNS Setup for Documentation Portal (`docs.hasb.dev`)
 
 1. **Navigate to DNS Management**:
-   ```text
-   Cloudflare Dashboard -> Websites -> hasb.dev -> DNS -> Records
-   ```
+
+    ```text
+    Cloudflare Dashboard -> Websites -> hasb.dev -> DNS -> Records
+    ```
 
 2. **Create Documentation Portal CNAME Record**:
-   - Click **Add record**.
-   - **Type**: `CNAME`
-   - **Name**: `docs` (resolves to `docs.hasb.dev`)
-   - **Target**: `hasb223.github.io`
-   - **Proxy status**:
-     - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages hosting/edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
-     - **Proxied (Orange cloud) [Optional Post-Provisioning]**: Routes traffic through Cloudflare's Anycast edge for DDoS protection and Cloudflare edge caching.
-       **Important:** With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`). Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
-   - **TTL**: Auto.
-   - Click **Save**.
+
+    - Click **Add record**.
+    - **Type**: `CNAME`
+    - **Name**: `docs` (resolves to `docs.hasb.dev`)
+    - **Target**: `hasb223.github.io`
+    - **Proxy status**:
+        - **DNS only (Grey cloud) [Initial / Recommended]**: Resolves directly to GitHub Pages hosting/edge. Allows GitHub Pages to verify domain ownership and provision Let's Encrypt certificates cleanly without edge SSL mode conflicts.
+        - **Proxied (Orange cloud) [Optional Post-Provisioning]**: Routes traffic through Cloudflare's Anycast edge for DDoS protection and Cloudflare edge caching.
+          **Important:** With GitHub Pages Enforce HTTPS enabled, use Cloudflare **`Full`** or **`Full (strict)`** for `docs.hasb.dev` if proxied (e.g. configured globally or scoped via a Configuration Rule for `Hostname equals docs.hasb.dev`). Do not use **`Flexible`** for `docs.hasb.dev` because it can cause redirect loops when GitHub Pages redirects HTTP to HTTPS.
+    - **TTL**: Auto.
+    - Click **Save**.
 
 3. **Domain Binding Source of Truth vs. CNAME Artifact**:
-   - **Active Binding**: The repository Pages custom-domain setting (under repository **Settings** -> **Pages** or managed via GitHub API) is the active binding and source of truth that triggers certificate issuance and domain routing.
-   - **Artifact Manifest**: The repository tracks `docs/CNAME` with content `docs.hasb.dev`. The workflow `.github/workflows/pages.yml` uploads `docs/` as the site artifact, recording the intended custom domain in the deployed artifact to keep configuration aligned in Git. However, for GitHub Actions-based Pages deployment, `docs/CNAME` should not be described as the sole mechanism that binds the domain.
+
+    - **Active Binding**: The repository Pages custom-domain setting (under repository **Settings** -> **Pages** or managed via GitHub API) is the active binding and source of truth that triggers certificate issuance and domain routing.
+    - **Artifact Manifest**: The repository tracks `docs/CNAME` with content `docs.hasb.dev`. The workflow `.github/workflows/pages.yml` uploads `docs/` as the site artifact, recording the intended custom domain in the deployed artifact to keep configuration aligned in Git. However, for GitHub Actions-based Pages deployment, `docs/CNAME` should not be described as the sole mechanism that binds the domain.
 
 ---
 
@@ -286,14 +304,19 @@ The Cloudflare control plane is managed declaratively via a dedicated, decoupled
 ### Architectural Decoupling & State Isolation
 
 1. **Independent Lifecycle**: `terraform-cloudflare/` is isolated from the AWS infrastructure root (`terraform/`). It does not define an AWS provider and does not manage or modify AWS resources. However, it still requires standard AWS credentials (e.g. AWS CLI profile, environment variables, or IAM role) to read and write state to the Amazon S3 remote backend.
+
 2. **Dedicated S3 State**: State is preserved in the S3 bucket `devops-bootcamp-terraform-hasb` under key `cloudflare/terraform.tfstate` in `ap-southeast-1`.
+
 3. **Zero-Secret State Policy**:
-   - `CLOUDFLARE_API_TOKEN` is injected at runtime via Infisical (`infisical run --env=dev --path=/terraform-cloudflare -- ...`). It is never stored in HCL, `terraform.tfvars`, or Git.
-   - For remotely managed tunnels (`config_src = "cloudflare"`), `tunnel_secret` is omitted.
-   - Tunnel connector tokens live strictly in Infisical path `/ansible/CLOUDFLARE_TUNNEL_TOKEN` for Ansible host orchestration. No sensitive connector tokens are stored in Terraform state.
+
+    - `CLOUDFLARE_API_TOKEN` is injected at runtime via Infisical (`infisical run --env=dev --path=/terraform-cloudflare -- ...`). It is never stored in HCL, `terraform.tfvars`, or Git.
+    - For remotely managed tunnels (`config_src = "cloudflare"`), `tunnel_secret` is omitted.
+    - Tunnel connector tokens live strictly in Infisical path `/ansible/CLOUDFLARE_TUNNEL_TOKEN` for Ansible host orchestration. No sensitive connector tokens are stored in Terraform state.
+
 4. **Declarative Edge SSL Configuration Ruleset (`rulesets.tf`)**:
-   - Zone-level SSL encryption defaults to `Full (strict)` for `hasb.dev` (required for GitHub Pages `docs.hasb.dev`).
-   - The edge SSL override for `web.hasb.dev` is codified declaratively in `terraform-cloudflare/rulesets.tf` using the Cloudflare Provider v5 `cloudflare_ruleset` resource (phase `http_config_settings`) with a stable rule reference (`web_ssl_flexible_override`), eliminating manual dashboard configuration.
+
+    - Zone-level SSL encryption defaults to `Full (strict)` for `hasb.dev` (required for GitHub Pages `docs.hasb.dev`).
+    - The edge SSL override for `web.hasb.dev` is codified declaratively in `terraform-cloudflare/rulesets.tf` using the Cloudflare Provider v5 `cloudflare_ruleset` resource (phase `http_config_settings`) with a stable rule reference (`web_ssl_flexible_override`), eliminating manual dashboard configuration.
 
 
 ### Module Configuration
@@ -460,18 +483,21 @@ resource "cloudflare_ruleset" "web_ssl_override" {
 ### Import and Operation Workflow
 
 #### Prerequisites
+
 1. **Configure Non-Secret Variables**:
    Create `terraform-cloudflare/terraform.tfvars` from the template:
    ```bash
    cp terraform-cloudflare/terraform.tfvars.example terraform-cloudflare/terraform.tfvars
    ```
    Populate your non-secret `cloudflare_account_id` and `cloudflare_zone_id` values (or supply them via `TF_VAR_cloudflare_account_id` and `TF_VAR_cloudflare_zone_id` environment variables).
+
 2. **Confirm Git Isolation**:
    Verify that `terraform-cloudflare/terraform.tfvars` remains ignored by Git:
    ```bash
    git check-ignore terraform-cloudflare/terraform.tfvars
    ```
    This ensures local identifiers and configuration files are never committed to version control.
+
 3. **AWS S3 Backend Credentials**:
    Ensure active AWS credentials (e.g. via `aws configure` or environment variables) with read/write access to the remote state bucket `devops-bootcamp-terraform-hasb`.
 
@@ -598,9 +624,10 @@ INF Updated to new configuration config="..."
 ### Cloudflare Error 521: Web Server Is Down
 - **Cause**: Cloudflare Edge cannot connect to origin Web EC2 on port 80 or 443.
 - **Resolution**:
-  1. Verify the web container is running: `docker ps --filter name=devops-web-app`.
-  2. Verify Web EC2 security group allows inbound port 80 from `0.0.0.0/0`.
-  3. Verify local curl on Web EC2 responds: `curl -I http://127.0.0.1:80`.
+
+    1. Verify the web container is running: `docker ps --filter name=devops-web-app`.
+    2. Verify Web EC2 security group allows inbound port 80 from `0.0.0.0/0`.
+    3. Verify local curl on Web EC2 responds: `curl -I http://127.0.0.1:80`.
 
 ### Cloudflare Error 522: Connection Timed Out
 - **Cause**: Cloudflare SSL mode is set to `Full (strict)`, but the origin server does not
@@ -612,9 +639,10 @@ INF Updated to new configuration config="..."
 - **Cause**: The `cloudflared` daemon is not running on the Monitoring EC2, or it is
   unable to communicate with Cloudflare edge.
 - **Resolution**:
-  1. Check container state: `docker inspect --format='{{.State.Running}}' cloudflared`.
-  2. Check outbound NAT connectivity from private subnet: `curl -I https://cloudflare.com`.
-  3. Verify the tunnel token matches the active tunnel registered in Cloudflare Zero Trust dashboard.
+
+    1. Check container state: `docker inspect --format='{{.State.Running}}' cloudflared`.
+    2. Check outbound NAT connectivity from private subnet: `curl -I https://cloudflare.com`.
+    3. Verify the tunnel token matches the active tunnel registered in Cloudflare Zero Trust dashboard.
 
 ### Grafana Host Header / Redirect Mismatch
 - **Cause**: Grafana redirects users to `localhost:3000` instead of `https://monitoring.hasb.dev`.
