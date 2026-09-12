@@ -236,11 +236,11 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     }
 
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:hasB223/devops-bootcamp-project:ref:refs/heads/main",
-        "repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main"
+        "repo:hasB223/devops-bootcamp-project:*",
+        "repo:hasB223@124649481/devops-bootcamp-project@1358353685:*"
       ]
     }
   }
@@ -338,3 +338,223 @@ resource "aws_iam_role_policy_attachment" "github_actions_ssm" {
   policy_arn = aws_iam_policy.github_actions_ssm.arn
 }
 
+# ==============================================================================
+# GitHub Actions Policy for Platform Lifecycle Automation (Park & Unpark)
+# ==============================================================================
+data "aws_iam_policy_document" "github_actions_lifecycle" {
+  # 1. AWS ec2:Describe* APIs (AWS specification: Describe* does not support resource-level permissions or condition keys)
+  statement {
+    sid    = "EC2DescribeReadPlatformState"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceStatus",
+      "ec2:DescribeInstanceCreditSpecifications",
+      "ec2:DescribeNatGateways",
+      "ec2:DescribeAddresses",
+      "ec2:DescribeRouteTables",
+      "ec2:DescribeVpcEndpoints",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSecurityGroupRules",
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeImages",
+      "ec2:DescribeInternetGateways",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeTags"
+    ]
+    resources = ["*"]
+  }
+
+  # 2. EC2 Compute Power Management (Strictly scoped to project EC2 instance ARNs)
+  statement {
+    sid    = "EC2ComputePowerManagement"
+    effect = "Allow"
+    actions = [
+      "ec2:StartInstances",
+      "ec2:StopInstances"
+    ]
+    resources = [
+      aws_instance.web.arn,
+      aws_instance.controller.arn,
+      aws_instance.monitoring.arn
+    ]
+  }
+
+  # 3. NAT Gateway Lifecycle (Scoped to project NAT Gateway ARNs, Subnet, and EIP)
+  statement {
+    sid    = "EC2NatGatewayLifecycle"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateNatGateway",
+      "ec2:DeleteNatGateway"
+    ]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:natgateway/*",
+      aws_subnet.public.arn,
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:elastic-ip/*"
+    ]
+  }
+
+  # 4. Elastic IP Allocation / Release (AWS specification: AllocateAddress and ReleaseAddress do not support resource ARNs)
+  statement {
+    sid    = "EC2ElasticIpLifecycle"
+    effect = "Allow"
+    actions = [
+      "ec2:AllocateAddress",
+      "ec2:ReleaseAddress"
+    ]
+    resources = ["*"]
+  }
+
+  # 5. Route Table & Routing Lifecycle
+  statement {
+    sid    = "EC2RouteTableLifecycle"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateRouteTable",
+      "ec2:DeleteRouteTable",
+      "ec2:CreateRoute",
+      "ec2:DeleteRoute",
+      "ec2:AssociateRouteTable",
+      "ec2:DisassociateRouteTable"
+    ]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:route-table/*",
+      aws_vpc.main.arn,
+      aws_subnet.private.arn,
+      aws_subnet.public.arn
+    ]
+  }
+
+  # 6. S3 VPC Gateway Endpoint Lifecycle
+  statement {
+    sid    = "EC2VpcEndpointLifecycle"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateVpcEndpoint",
+      "ec2:DeleteVpcEndpoints",
+      "ec2:ModifyVpcEndpoint"
+    ]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/*",
+      aws_vpc.main.arn
+    ]
+  }
+
+  # 7. EC2 Resource Tagging
+  statement {
+    sid    = "EC2TaggingManagement"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateTags",
+      "ec2:DeleteTags"
+    ]
+    resources = [
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*/*"
+    ]
+  }
+
+  # 8. S3 Remote State Bucket-Level Actions
+  statement {
+    sid    = "S3RemoteStateBucketAccess"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:GetBucketVersioning"
+    ]
+    resources = [
+      "arn:aws:s3:::devops-bootcamp-terraform-${var.owner_slug}"
+    ]
+  }
+
+  # 9. S3 Remote State Object-Level Actions
+  statement {
+    sid    = "S3RemoteStateObjectAccess"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::devops-bootcamp-terraform-${var.owner_slug}/*"
+    ]
+  }
+
+  # 10. IAM State Read Refresh (Required for full terraform plan/refresh across managed roles and policies)
+  statement {
+    sid    = "IAMStateReadRefresh"
+    effect = "Allow"
+    actions = [
+      "iam:GetRole",
+      "iam:GetRolePolicy",
+      "iam:ListRolePolicies",
+      "iam:ListAttachedRolePolicies",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:ListPolicyVersions",
+      "iam:GetInstanceProfile",
+      "iam:GetOpenIDConnectProvider"
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/devops-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/devops-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/devops-*",
+      aws_iam_openid_connect_provider.github.arn
+    ]
+  }
+
+  # 11. ECR Repository State Read Refresh
+  statement {
+    sid    = "ECRStateReadRefresh"
+    effect = "Allow"
+    actions = [
+      "ecr:DescribeRepositories",
+      "ecr:GetRepositoryPolicy",
+      "ecr:GetLifecyclePolicy"
+    ]
+    resources = [
+      aws_ecr_repository.app.arn
+    ]
+  }
+
+  # 12. Ansible SSM S3 Bucket Read Refresh
+  statement {
+    sid    = "S3AnsibleBucketReadRefresh"
+    effect = "Allow"
+    actions = [
+      "s3:GetBucketAcl",
+      "s3:GetBucketCORS",
+      "s3:GetBucketWebsite",
+      "s3:GetBucketVersioning",
+      "s3:GetAccelerationConfiguration",
+      "s3:GetBucketRequestPayment",
+      "s3:GetBucketLogging",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetBucketObjectLockConfiguration",
+      "s3:GetBucketTagging",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketPublicAccessBlock"
+    ]
+    resources = [
+      aws_s3_bucket.ansible_ssm.arn,
+      "${aws_s3_bucket.ansible_ssm.arn}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_lifecycle" {
+  name        = "devops-github-actions-lifecycle-policy"
+  description = "Scoped policy allowing GitHub Actions OIDC workflow to manage platform park/unpark lifecycle"
+  policy      = data.aws_iam_policy_document.github_actions_lifecycle.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_lifecycle" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_lifecycle.arn
+}

@@ -25,3 +25,8 @@ ansible/inventory.ini
 ansible/roles/
 *.retry
 .ansible/
+
+# Python
+__pycache__/
+*.py[cod]
+

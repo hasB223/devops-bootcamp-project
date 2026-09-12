@@ -1,0 +1,92 @@
+name: Platform Lifecycle Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Platform lifecycle action to execute'
+        type: choice
+        options:
+          - status
+          - health
+          - park
+          - unpark
+        default: status
+      dry_run:
+        description: 'Dry-run preview mode (simulate without making live changes)'
+        type: boolean
+        default: false
+      allow_unrelated_changes:
+        description: 'Allow unpark plan to apply resources outside unpark allowlist'
+        type: boolean
+        default: false
+  schedule:
+    # Nightly auto-park scheduled at 00:00 SGT (16:00 UTC)
+    - cron: '0 16 * * *'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lifecycle:
+    name: Platform Lifecycle
+    runs-on: ubuntu-latest
+    # Safety gate: If scheduled run, execute only when AUTO_PARK_ENABLED is 'true'
+    if: github.event_name != 'schedule' || vars.AUTO_PARK_ENABLED == 'true'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Action & Safety Gates
+        id: resolver
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "action=park" >> "$GITHUB_OUTPUT"
+            echo "dry_run=false" >> "$GITHUB_OUTPUT"
+            echo "allow_unrelated=false" >> "$GITHUB_OUTPUT"
+            echo "==> Triggered by schedule. Resolved ACTION strictly forced to: park."
+          else
+            echo "action=${{ github.event.inputs.action }}" >> "$GITHUB_OUTPUT"
+            echo "dry_run=${{ github.event.inputs.dry_run }}" >> "$GITHUB_OUTPUT"
+            echo "allow_unrelated=${{ github.event.inputs.allow_unrelated_changes }}" >> "$GITHUB_OUTPUT"
+            echo "==> Triggered manually. Resolved ACTION: ${{ github.event.inputs.action }}."
+          fi
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Setup Terraform (only for park and unpark)
+        if: steps.resolver.outputs.action == 'park' || steps.resolver.outputs.action == 'unpark'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+          terraform_wrapper: false
+
+      - name: Initialize Terraform Backend (only for park and unpark)
+        if: steps.resolver.outputs.action == 'park' || steps.resolver.outputs.action == 'unpark'
+        working-directory: terraform
+        run: terraform init -backend=true
+
+      - name: Execute Lifecycle Engine
+        id: run-engine
+        env:
+          RESOLVED_ACTION: ${{ steps.resolver.outputs.action }}
+          DRY_RUN: ${{ steps.resolver.outputs.dry_run }}
+          ALLOW_UNRELATED: ${{ steps.resolver.outputs.allow_unrelated }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          FLAGS=""
+          if [ "$DRY_RUN" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          if [ "$ALLOW_UNRELATED" = "true" ]; then
+            FLAGS="$FLAGS --allow-unrelated-changes"
+          fi
+
+          echo "==> Executing: python3 scripts/platform.py $RESOLVED_ACTION $FLAGS"
+          python3 scripts/platform.py "$RESOLVED_ACTION" $FLAGS

@@ -55,8 +55,9 @@ resource "aws_instance" "web" {
   user_data_replace_on_change = false
 
   tags = {
-    Name = "web-server"
-    Role = "web"
+    Name     = "web-server"
+    Role     = "web"
+    AutoPark = "true"
   }
 }
 
@@ -94,8 +95,9 @@ resource "aws_instance" "controller" {
   }
 
   tags = {
-    Name = "ansible-controller"
-    Role = "controller"
+    Name     = "ansible-controller"
+    Role     = "controller"
+    AutoPark = "true"
   }
 }
 
@@ -124,7 +126,8 @@ resource "aws_instance" "monitoring" {
   user_data_replace_on_change = false
 
   tags = {
-    Name = "monitoring-server"
-    Role = "monitoring"
+    Name     = "monitoring-server"
+    Role     = "monitoring"
+    AutoPark = "true"
   }
 }

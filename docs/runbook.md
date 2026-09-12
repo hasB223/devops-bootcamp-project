@@ -344,17 +344,68 @@ To prevent unnecessary AWS cloud spend, the platform supports two distinct cost-
 
 ### Path 1: Park Runtime Resources (Recommended for Idle Intervals)
 
-The primary continuous cost drivers in this architecture are the **NAT Gateway** (~$32.40/month plus data processing) and **EC2 compute hours**. During idle intervals, park the runtime while preserving networking, ECR container images, and IAM identities:
+The primary continuous cost drivers in this architecture are the **NAT Gateway** (~$32.40/month plus data processing) and **EC2 compute hours**. During idle intervals, park the runtime to eliminate these costs while preserving all foundational assets (VPC, subnets, EBS disks, ECR container images, IAM identities, and Terraform remote state).
+
+Parked monthly cost is **~$8.55/month** (EBS storage ~$4.80 + Web EIP IPv4 charge ~$3.60 + S3/ECR storage <$0.15).
+
+---
+
+#### Option A: Automated CLI via Makefile / Python (Recommended)
+
+The platform includes a dedicated lifecycle engine with built-in safeguards:
+- **Self-Termination Guard**: Prevents stopping your own session if executed from `ansible-controller`.
+- **5-Resource Network Dependency Awareness**: Tracks `aws_eip.nat`, `aws_nat_gateway.gw`, `aws_route_table.private`, `aws_route_table_association.private`, and `aws_vpc_endpoint.s3`.
+- **Unpark Plan Guard**: Inspects `terraform plan` output and blocks execution if foreign changes or destructive replacements appear.
+- **Read-Only Status & Health**: Zero-Terraform fast queries (< 3s).
+
+```bash
+# 1. Check current live status (read-only, fast)
+make status
+# Or: python3 scripts/platform.py status
+
+# 2. Probe public web & monitoring endpoints
+make health
+# Or: python3 scripts/platform.py health
+
+# 3. Park runtime resources (simulate with --dry-run first if desired)
+python3 scripts/platform.py park --dry-run
+make park
+
+# 4. Unpark and restore the platform
+python3 scripts/platform.py unpark --dry-run
+make unpark
+```
+
+---
+
+#### Option B: GitHub Actions Workflow (Browser / Mobile)
+
+You can trigger lifecycle operations directly from GitHub without needing local AWS CLI credentials:
+1. Navigate to **Actions** -> **Platform Lifecycle Automation**.
+2. Click **Run workflow**.
+3. Select the desired **Action** (`status`, `health`, `park`, `unpark`).
+4. Toggle `dry_run: true` to preview the planned changes in GitHub Actions logs without making live modifications.
+
+> [!NOTE]
+> **Optional Nightly Auto-Park Protection**:
+> A scheduled cron runs at `00:00 SGT` (`16:00 UTC`). It is protected by the repository variable `vars.AUTO_PARK_ENABLED`. By default, it is inactive (`false`). If you wish to enable automatic nightly shutdown to prevent accidental overnight spend, set `AUTO_PARK_ENABLED = "true"` under repository **Settings -> Secrets and variables -> Actions -> Variables**. Scheduled executions strictly force the `park` action; unparking is never permitted on schedule.
+
+---
+
+#### Option C: Manual CLI Commands (Reference)
+
+If you prefer to run raw commands step-by-step:
 
 1. **Stop EC2 Instances**:
    ```bash
+   export AWS_PAGER=""
    INSTANCE_IDS=$(aws ec2 describe-instances \
      --filters "Name=tag:Project,Values=devops-bootcamp-project" "Name=instance-state-name,Values=running" \
      --query "Reservations[].Instances[].InstanceId" --output text)
 
    if [ -n "$INSTANCE_IDS" ]; then
      aws ec2 stop-instances --instance-ids $INSTANCE_IDS
-     echo "Stopped compute instances: $INSTANCE_IDS"
+     aws ec2 wait instance-stopped --instance-ids $INSTANCE_IDS
    fi
    ```
 
@@ -363,16 +414,19 @@ The primary continuous cost drivers in this architecture are the **NAT Gateway**
    cd terraform
    terraform destroy -target=aws_nat_gateway.gw -target=aws_eip.nat -auto-approve
    ```
+   *Note: Terraform cascades destruction to dependent private route tables and S3 gateway endpoint associations (5 resources destroyed total).*
 
-3. **What Persists vs What is Stopped**:
-   - **Billable Spend Eliminated**: EC2 compute per-second charges and NAT Gateway hourly charges.
-   - **Persistent Assets Preserved**: VPC network topology, subnets, route tables, security groups, private ECR repository with published images, IAM roles, and S3 remote state.
-
-4. **Resuming from Parked State**:
+3. **Resuming from Parked State**:
    ```bash
    cd terraform
-   terraform apply -target=aws_eip.nat -target=aws_nat_gateway.gw -auto-approve
-   aws ec2 start-instances --instance-ids <INSTANCE_IDS>
+   terraform plan -out=unpark.tfplan \
+     -var="instance_type=t3.small" \
+     -var="key_name=devops-bootcamp-macbook-ed25519"
+   terraform apply unpark.tfplan
+   rm -f unpark.tfplan
+
+   aws ec2 start-instances --instance-ids $INSTANCE_IDS
+   aws ec2 wait instance-running --instance-ids $INSTANCE_IDS
    ```
 
 ---

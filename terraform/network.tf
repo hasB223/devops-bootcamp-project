@@ -58,7 +58,8 @@ resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.gw]
 
   tags = {
-    Name = "devops-nat-eip"
+    Name     = "devops-nat-eip"
+    AutoPark = "true"
   }
 }
 
@@ -67,7 +68,8 @@ resource "aws_nat_gateway" "gw" {
   subnet_id     = aws_subnet.public.id
 
   tags = {
-    Name = "devops-ngw"
+    Name     = "devops-ngw"
+    AutoPark = "true"
   }
 
   depends_on = [aws_internet_gateway.gw]
@@ -98,7 +100,8 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "devops-private-route"
+    Name     = "devops-private-route"
+    AutoPark = "true"
   }
 }
 
