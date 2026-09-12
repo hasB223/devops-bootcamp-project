@@ -79,6 +79,7 @@ jobs:
           DRY_RUN: ${{ steps.resolver.outputs.dry_run }}
           ALLOW_UNRELATED: ${{ steps.resolver.outputs.allow_unrelated }}
           AWS_REGION: ${{ vars.AWS_REGION }}
+          PYTHONUNBUFFERED: "1"
         run: |
           FLAGS=""
           if [ "$DRY_RUN" = "true" ]; then

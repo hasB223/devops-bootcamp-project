@@ -46,19 +46,19 @@ WEB_ENDPOINTS = [
 
 
 def log_info(msg: str) -> None:
-    print(f"{COLOR_CYAN}==>{COLOR_RESET} {COLOR_BOLD}{msg}{COLOR_RESET}")
+    print(f"{COLOR_CYAN}==>{COLOR_RESET} {COLOR_BOLD}{msg}{COLOR_RESET}", flush=True)
 
 
 def log_success(msg: str) -> None:
-    print(f"{COLOR_GREEN}[OK]{COLOR_RESET} {msg}")
+    print(f"{COLOR_GREEN}[OK]{COLOR_RESET} {msg}", flush=True)
 
 
 def log_warn(msg: str) -> None:
-    print(f"{COLOR_YELLOW}[WARN]{COLOR_RESET} {msg}")
+    print(f"{COLOR_YELLOW}[WARN]{COLOR_RESET} {msg}", flush=True)
 
 
 def log_error(msg: str) -> None:
-    print(f"{COLOR_RED}[ERROR]{COLOR_RESET} {msg}")
+    print(f"{COLOR_RED}[ERROR]{COLOR_RESET} {msg}", flush=True)
 
 
 def run_aws_cli(args: list[str], region: str = DEFAULT_REGION, check: bool = True) -> tuple[int, str, str]:
@@ -390,7 +390,13 @@ def cmd_park(region: str = DEFAULT_REGION, dry_run: bool = False, force_self_par
                     "-target=aws_vpc_endpoint.s3",
                 ]
 
-            destroy_cmd = ["terraform", "-chdir=terraform", "destroy"] + targets + ["-auto-approve"]
+            destroy_cmd = [
+                "terraform",
+                "-chdir=terraform",
+                "destroy",
+                "-var=instance_type=t3.small",
+                "-var=key_name=devops-bootcamp-macbook-ed25519",
+            ] + targets + ["-auto-approve"]
             log_info(f"Executing: {' '.join(destroy_cmd)}")
             res = subprocess.run(destroy_cmd)
             if res.returncode != 0:

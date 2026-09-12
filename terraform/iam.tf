@@ -388,7 +388,9 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     effect = "Allow"
     actions = [
       "ec2:AllocateAddress",
-      "ec2:ReleaseAddress"
+      "ec2:ReleaseAddress",
+      "ec2:AssociateAddress",
+      "ec2:DisassociateAddress"
     ]
     resources = ["*"]
   }
