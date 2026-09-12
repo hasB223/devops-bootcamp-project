@@ -7,6 +7,7 @@ This document describes the automated deployment, architecture, and operational 
 ## Purpose
 
 The monitoring layer provides metrics collection, alerting foundations, and visual operational dashboards:
+
 - **Host Metrics Telemetry**: Runs `node_exporter` on the **Web Server** (`10.0.0.5`), exposing CPU, memory, disk, and network metrics on port `9100`.
 - **Centralized Metrics Aggregation**: Runs **Prometheus** as a containerized service on the **Monitoring Server** (`10.0.0.136`), scraping `node_exporter` every 15 seconds.
 - **Operational Visualization**: Runs **Grafana** as a containerized dashboard service on the Monitoring Server, pre-provisioned with the Prometheus data source and a curated Node Exporter dashboard.
@@ -67,8 +68,8 @@ The monitoring layer provides metrics collection, alerting foundations, and visu
 | **Prometheus** | `9090` | `0.0.0.0` (Container) | VPC CIDR (`10.0.0.0/24`) only | `devops-private-sg` (AWS Security Group) |
 | **Grafana** | `3000` | `0.0.0.0` (Container) | VPC CIDR (`10.0.0.0/24`) only | `devops-private-sg` (AWS Security Group) |
 
-> [!IMPORTANT]
-> Neither Prometheus (`9090`) nor Grafana (`3000`) is accessible from the public internet. External access to Grafana is provisioned exclusively in Phase 5 via Cloudflare Tunnel (`cloudflared`) without opening any inbound firewall ports.
+!!! important
+    Neither Prometheus (`9090`) nor Grafana (`3000`) is accessible from the public internet. External access to Grafana is provisioned exclusively in Phase 5 via Cloudflare Tunnel (`cloudflared`) without opening any inbound firewall ports.
 
 ---
 

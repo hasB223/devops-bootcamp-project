@@ -5,6 +5,7 @@ This document describes the foundational AWS infrastructure for the DevOps Bootc
 ## Purpose
 
 This layer owns the base cloud environment in AWS region `ap-southeast-1`:
+
 - Remote state backend in S3 with state locking
 - Virtual Private Cloud (`devops-vpc`) with split public and private subnets
 - Egress connectivity via Internet Gateway (`devops-igw`) and NAT Gateway (`devops-ngw`)
@@ -68,9 +69,8 @@ terraform version
 
 #### AWS Authentication & Remote State Setup (One-Time Bootstrap)
 
-> [!NOTE]
-> **Bootstrap Context (The "Chicken-and-Egg" Problem)**:
-> Terraform needs an S3 bucket to store its remote state (`terraform.tfstate`) and track resources. However, it cannot declare and create its own backend storage bucket within the same module where that backend is consumed. Therefore, the S3 state bucket is provisioned once via the AWS CLI as a prerequisite bootstrap step. All subsequent infrastructure (VPC, Subnets, Gateways, EC2 instances, Security Groups, IAM, and ECR) is managed 100% declaratively through Terraform.
+!!! note "Bootstrap Context (The Chicken-and-Egg Problem)"
+    Terraform needs an S3 bucket to store its remote state (`terraform.tfstate`) and track resources. However, it cannot declare and create its own backend storage bucket within the same module where that backend is consumed. Therefore, the S3 state bucket is provisioned once via the AWS CLI as a prerequisite bootstrap step. All subsequent infrastructure (VPC, Subnets, Gateways, EC2 instances, Security Groups, IAM, and ECR) is managed 100% declaratively through Terraform.
 
 Ensure your local shell has AWS credentials configured:
 

@@ -7,7 +7,8 @@ This document describes the containerization of the web application for the DevO
 ## Purpose
 
 This layer owns the application packaging and container runtime:
-- Bundles the frontend web application (`Infratify/ship`) into a production-grade OCI container.
+
+- Bundles the customizable Three.js ship microsite into a production-grade OCI container.
 - Implements a two-stage build to decouple the Node build toolchain from the minimal static Nginx runtime.
 - Exposes standard HTTP port 80 with an automated container healthcheck.
 - Defines local orchestration via Docker Compose for rapid testing and verification.
