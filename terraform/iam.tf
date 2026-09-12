@@ -342,27 +342,12 @@ resource "aws_iam_role_policy_attachment" "github_actions_ssm" {
 # GitHub Actions Policy for Platform Lifecycle Automation (Park & Unpark)
 # ==============================================================================
 data "aws_iam_policy_document" "github_actions_lifecycle" {
-  # 1. AWS ec2:Describe* APIs (AWS specification: Describe* does not support resource-level permissions or condition keys)
+  # 1. AWS ec2:Describe* APIs (All EC2 Describe* APIs are read-only and require Resource = ["*"])
   statement {
     sid    = "EC2DescribeReadPlatformState"
     effect = "Allow"
     actions = [
-      "ec2:DescribeInstances",
-      "ec2:DescribeInstanceStatus",
-      "ec2:DescribeInstanceCreditSpecifications",
-      "ec2:DescribeNatGateways",
-      "ec2:DescribeAddresses",
-      "ec2:DescribeRouteTables",
-      "ec2:DescribeVpcEndpoints",
-      "ec2:DescribeVpcs",
-      "ec2:DescribeSubnets",
-      "ec2:DescribeSecurityGroups",
-      "ec2:DescribeSecurityGroupRules",
-      "ec2:DescribeAvailabilityZones",
-      "ec2:DescribeImages",
-      "ec2:DescribeInternetGateways",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DescribeTags"
+      "ec2:Describe*"
     ]
     resources = ["*"]
   }
@@ -439,6 +424,7 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     ]
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:vpc-endpoint/*",
+      "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:route-table/*",
       aws_vpc.main.arn
     ]
   }
@@ -489,15 +475,8 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     sid    = "IAMStateReadRefresh"
     effect = "Allow"
     actions = [
-      "iam:GetRole",
-      "iam:GetRolePolicy",
-      "iam:ListRolePolicies",
-      "iam:ListAttachedRolePolicies",
-      "iam:GetPolicy",
-      "iam:GetPolicyVersion",
-      "iam:ListPolicyVersions",
-      "iam:GetInstanceProfile",
-      "iam:GetOpenIDConnectProvider"
+      "iam:Get*",
+      "iam:List*"
     ]
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/devops-*",
@@ -512,9 +491,9 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     sid    = "ECRStateReadRefresh"
     effect = "Allow"
     actions = [
-      "ecr:DescribeRepositories",
-      "ecr:GetRepositoryPolicy",
-      "ecr:GetLifecyclePolicy"
+      "ecr:Describe*",
+      "ecr:Get*",
+      "ecr:List*"
     ]
     resources = [
       aws_ecr_repository.app.arn
@@ -526,20 +505,8 @@ data "aws_iam_policy_document" "github_actions_lifecycle" {
     sid    = "S3AnsibleBucketReadRefresh"
     effect = "Allow"
     actions = [
-      "s3:GetBucketAcl",
-      "s3:GetBucketCORS",
-      "s3:GetBucketWebsite",
-      "s3:GetBucketVersioning",
-      "s3:GetAccelerationConfiguration",
-      "s3:GetBucketRequestPayment",
-      "s3:GetBucketLogging",
-      "s3:GetLifecycleConfiguration",
-      "s3:GetReplicationConfiguration",
-      "s3:GetEncryptionConfiguration",
-      "s3:GetBucketObjectLockConfiguration",
-      "s3:GetBucketTagging",
-      "s3:GetBucketPolicy",
-      "s3:GetBucketPublicAccessBlock"
+      "s3:Get*",
+      "s3:List*"
     ]
     resources = [
       aws_s3_bucket.ansible_ssm.arn,
