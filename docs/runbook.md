@@ -424,3 +424,22 @@ When the entire environment is no longer needed:
   docker logs cloudflared --tail 50
   ```
   Ensure `CLOUDFLARE_TUNNEL_TOKEN` matches the active token in Cloudflare Zero Trust dashboard.
+
+### 4. Grafana Dashboard Displays "No Data"
+- **Symptom**: `https://monitoring.hasb.dev` dashboard panels show "No data" while services are running.
+- **Cause**:
+  1. Prometheus scrape target misconfigured with an AWS Instance ID (`i-...`) rather than a reachable VPC private IP (`10.0.0.5:9100`).
+  2. Grafana datasource UID does not match the dashboard definition (`uid: Prometheus`).
+  3. The time range filter covers an interval where the EC2 fleet was parked (stopped).
+- **Resolution**:
+  1. Verify Prometheus target health:
+     ```bash
+     curl -s http://127.0.0.1:9090/api/v1/targets | grep -o '"health":"[^"]*"'
+     ```
+     Target `node_exporter` must report `"health":"up"`. Ensure `/opt/monitoring/prometheus.yaml` targets `10.0.0.5:9100`.
+  2. Verify Grafana datasource UID:
+     ```bash
+     curl -s http://127.0.0.1:3000/api/datasources/uid/Prometheus
+     ```
+     Must return HTTP 200 with `"uid":"Prometheus"`.
+  3. Ensure the dashboard time range is set to active runtime (e.g. "Last 5 minutes").

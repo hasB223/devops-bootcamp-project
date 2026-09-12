@@ -7,10 +7,10 @@
 # ==============================================================================
 
 [web]
-web-server ansible_host=i-0128d6c619f0f8684
+web-server ansible_host=i-0128d6c619f0f8684 private_ip=10.0.0.5
 
 [monitoring]
-monitoring-server ansible_host=i-0054eda9287d889ff
+monitoring-server ansible_host=i-0054eda9287d889ff private_ip=10.0.0.136
 
 [targets:children]
 web

@@ -281,6 +281,14 @@
       delay: 3
       changed_when: false
 
+    - name: Verify Prometheus node_exporter target is healthy
+      ansible.builtin.assert:
+        that:
+          - (prometheus_targets.json.data.activeTargets | selectattr('scrapePool', 'equalto', 'node_exporter') | map(attribute='health') | list | first | default('down')) == 'up'
+        fail_msg: >-
+          Prometheus node_exporter target is not reporting healthy ('up').
+          Verify that the target resolves to a reachable VPC private IP (e.g. 10.0.0.5:9100).
+
     - name: Verify Grafana operational health endpoint responds with HTTP 200
       ansible.builtin.uri:
         url: "http://127.0.0.1:{{ grafana_port }}/api/health"
