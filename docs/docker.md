@@ -44,7 +44,7 @@ app/
 | **Container Port** | `80` | Internal HTTP listening port |
 | **Host Port Mapping** | `80:80` | Local development exposure |
 | **ECR Repository URI** | `<ACCOUNT_ID>.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hasb` | Destination registry in AWS |
-| **Image Tags** | `latest`, `<git-full-sha>` | Rolling tag and per-commit SHA tag (the CI workflow tags with the full `github.sha`; SHA-tag uniqueness is by convention — see `image_tag_mutability` in `terraform/ecr.tf`) |
+| **Image Tags** | `latest`, `<git-full-sha>` | Rolling tag and per-commit SHA tag (the CI workflow tags with the full `github.sha`). SHA tags are immutable once pushed: the registry (`IMMUTABLE_WITH_EXCLUSION`, `terraform/ecr.tf`) rejects **any** push reusing an existing SHA tag with `ImageTagAlreadyExistsException` — even a rebuilt image with identical content or manifest. Only `latest` is excluded so the rolling tag (used by the Ansible deploy path) keeps moving |
 
 ---
 

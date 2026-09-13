@@ -135,7 +135,7 @@ This workflow packages the containerized application and publishes it to AWS Pri
      -f app/Dockerfile \
      app
    ```
-4. **Tag & Push**: Pushes both the full commit-SHA tag (`${{ github.sha }}`) and the mutable `latest` tag to ECR. The SHA tag is unique per commit by convention; tag immutability is not enforced by the registry (see `image_tag_mutability` in `terraform/ecr.tf`).
+4. **Tag & Push**: Pushes both the full commit-SHA tag (`${{ github.sha }}`) and the mutable `latest` tag to ECR. SHA tags are enforced immutable by the registry (`IMMUTABLE_WITH_EXCLUSION`, `terraform/ecr.tf`): Amazon ECR rejects **any** push that uses an already-existing immutable SHA tag with `ImageTagAlreadyExistsException` — including a rebuilt image whose content or manifest is identical to what was previously published. Only `latest` remains mutable through the exclusion. A rerun of this workflow after its SHA tag was published may therefore fail during the push step; recover by deploying the already-published SHA via the `deploy_tag` input, or by creating a new commit to publish under a new SHA.
 
 !!! note "Decoupled Deployment Boundary"
     Pushing a new container to ECR does not automatically trigger rolling restarts on Web EC2. Production container updates on the host are executed intentionally via the Ansible Controller playbook (`ansible/playbook.yml`).
