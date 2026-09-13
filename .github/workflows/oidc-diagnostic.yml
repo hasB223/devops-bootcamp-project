@@ -1,0 +1,71 @@
+# Temporary OIDC subject diagnostic.
+#
+# Purpose: capture the actual GitHub OIDC `sub` claim for a manual
+# workflow_dispatch run from main and for a scheduled run. This evidence is
+# required before replacing the current wildcard-trusted GitHub Actions IAM
+# role (StringLike on "repo:...:*") with role-specific exact trust policies,
+# so the new trust conditions are written from observed claims rather than
+# inference.
+#
+# This workflow is temporary. Remove it only after: (1) the manual and
+# scheduled subject claims are recorded, (2) the replacement roles are
+# verified working, and (3) the legacy wildcard role is ready for retirement.
+#
+# It performs no AWS calls and requires no repository variables. Only
+# non-sensitive identity claims are printed: `sub`, `ref`, `repository`,
+# `workflow` from the token payload, plus the run's event context. The token
+# itself and its signature are never echoed.
+name: OIDC Subject Diagnostic
+
+on:
+  workflow_dispatch:
+  # Temporary daily schedule (00:30 SGT) while evidence is gathered.
+  # Deliberately offset from the platform-lifecycle auto-park cron (16:00 UTC).
+  schedule:
+    - cron: '30 16 * * *'
+
+permissions:
+  id-token: write
+
+jobs:
+  capture-subject:
+    name: Capture OIDC subject claims
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Request OIDC token and print identity claims
+        env:
+          GH_EVENT_NAME: ${{ github.event_name }}
+          GH_REF: ${{ github.ref }}
+          GH_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          echo "Run context: event_name=${GH_EVENT_NAME} ref=${GH_REF} run_id=${GH_RUN_ID}"
+
+          # Request the OIDC token for the AWS audience (same audience the
+          # publishing workflows use). The token value stays in a shell
+          # variable and is never printed.
+          RESPONSE="$(curl -fsS \
+            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")"
+
+          TOKEN="$(printf '%s' "${RESPONSE}" | jq -r '.value')"
+          if [ -z "${TOKEN}" ] || [ "${TOKEN}" = "null" ]; then
+            echo "::error::Failed to obtain OIDC token from GitHub's token endpoint."
+            exit 1
+          fi
+
+          # Decode only the JWT payload segment and print the selected
+          # identity claims. The header and signature segments are discarded
+          # without being displayed.
+          printf '%s' "${TOKEN}" | python3 -c '
+          import base64, json, sys
+          payload = sys.stdin.read().strip().split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          print(json.dumps(
+              {k: claims.get(k) for k in ("sub", "ref", "repository", "workflow")},
+              indent=2,
+          ))
+          '

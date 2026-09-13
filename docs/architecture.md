@@ -190,7 +190,7 @@ Traffic entering the platform uses two distinct routing patterns:
 
 ## CI/CD & Keyless Container Pipeline
 
-The delivery pipeline automates quality checks and publishes immutable container artifacts without static AWS credentials:
+The delivery pipeline automates quality checks and publishes commit-SHA-tagged container artifacts (unique per commit by convention; registry-enforced immutability is planned) without static AWS credentials:
 
 ```text
 Developer Push / PR
@@ -210,8 +210,8 @@ Developer Push / PR
   |
   | 3. Validate Role Trust Policy:
   |    - aud: sts.amazonaws.com
-  |    - sub: repo:hasB223/devops-bootcamp-project:ref:refs/heads/main
-  |    - sub: repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main
+  |    - sub (StringLike, current): repo:hasB223/devops-bootcamp-project:*
+  |    - sub (StringLike, current): repo:hasB223@124649481/devops-bootcamp-project@1358353685:*
   v
 [ Issue Temporary AWS Credentials ]
   |

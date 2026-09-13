@@ -41,7 +41,7 @@ Authentication between GitHub Actions and AWS is established using OpenID Connec
 | --- | --- |
 | **OIDC Provider URL** | `https://token.actions.githubusercontent.com` |
 | **Audience (`aud`)** | `sts.amazonaws.com` |
-| **Subject Claim (`sub`)** | Exact matching (`StringEquals`) for:<br>1. Standard: `repo:hasB223/devops-bootcamp-project:ref:refs/heads/main`<br>2. Immutable: `repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main` |
+| **Subject Claim (`sub`)** | Wildcard matching (`StringLike`) for two accepted repository subject prefixes:<br>1. Standard: `repo:hasB223/devops-bootcamp-project:*`<br>2. Immutable-ID: `repo:hasB223@124649481/devops-bootcamp-project@1358353685:*`<br>Any workflow run in this repository (any branch, PR, or environment) can therefore assume the role. Tightening trust to exact subjects is planned follow-up work. |
 | **IAM Role** | `devops-github-actions-role` |
 | **Role Permissions** | Scoped ECR push: `ecr:GetAuthorizationToken` (`*`), and image actions on `aws_ecr_repository.app.arn` |
 
@@ -135,7 +135,7 @@ This workflow packages the containerized application and publishes it to AWS Pri
      -f app/Dockerfile \
      app
    ```
-4. **Tag & Push**: Pushes both the immutable commit SHA (`${{ github.sha }}`) and mutable `latest` tags to ECR.
+4. **Tag & Push**: Pushes both the full commit-SHA tag (`${{ github.sha }}`) and the mutable `latest` tag to ECR. The SHA tag is unique per commit by convention; tag immutability is not enforced by the registry (see `image_tag_mutability` in `terraform/ecr.tf`).
 
 !!! note "Decoupled Deployment Boundary"
     Pushing a new container to ECR does not automatically trigger rolling restarts on Web EC2. Production container updates on the host are executed intentionally via the Ansible Controller playbook (`ansible/playbook.yml`).
@@ -280,13 +280,13 @@ After pushing or merging to `main`:
   Error: Not authorized to perform sts:AssumeRoleWithWebIdentity
   ```
 - **Cause**: The IAM role trust policy does not match the GitHub repository or branch claim.
-- **Fix**: Verify `terraform/iam.tf` includes both exact claims in the trust policy condition:
+- **Fix**: Verify `terraform/iam.tf` includes both accepted wildcard subject prefixes in the trust policy condition:
   ```hcl
-  test     = "StringEquals"
+  test     = "StringLike"
   variable = "token.actions.githubusercontent.com:sub"
   values = [
-    "repo:hasB223/devops-bootcamp-project:ref:refs/heads/main",
-    "repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main"
+    "repo:hasB223/devops-bootcamp-project:*",
+    "repo:hasB223@124649481/devops-bootcamp-project@1358353685:*"
   ]
   ```
   Also ensure `audience = "sts.amazonaws.com"`.

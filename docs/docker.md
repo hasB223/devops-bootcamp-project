@@ -44,7 +44,7 @@ app/
 | **Container Port** | `80` | Internal HTTP listening port |
 | **Host Port Mapping** | `80:80` | Local development exposure |
 | **ECR Repository URI** | `<ACCOUNT_ID>.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hasb` | Destination registry in AWS |
-| **Image Tags** | `latest`, `<git-short-sha>` | Canonical rolling and immutable git tags |
+| **Image Tags** | `latest`, `<git-full-sha>` | Rolling tag and per-commit SHA tag (the CI workflow tags with the full `github.sha`; SHA-tag uniqueness is by convention — see `image_tag_mutability` in `terraform/ecr.tf`) |
 
 ---
 
@@ -103,8 +103,8 @@ ECR_URI=$(terraform -chdir=terraform output -raw ecr_repository_url 2>/dev/null 
 # Authenticate Docker daemon to ECR
 aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin "$ECR_URI"
 
-# Tag image with 'latest' and immutable git commit SHA
-GIT_SHA=$(git rev-parse --short HEAD)
+# Tag image with 'latest' and the git commit SHA
+GIT_SHA=$(git rev-parse HEAD)
 docker tag devops-bootcamp-app:local "$ECR_URI:latest"
 docker tag devops-bootcamp-app:local "$ECR_URI:$GIT_SHA"
 
