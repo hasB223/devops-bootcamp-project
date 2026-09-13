@@ -23,6 +23,9 @@ on:
   # Deliberately offset from the platform-lifecycle auto-park cron (16:00 UTC).
   schedule:
     - cron: '30 16 * * *'
+    # Temporary five-minute schedule for accelerated OIDC evidence collection;
+    # remove immediately after the first successful schedule-event observation.
+    - cron: '2-59/5 * * * *'
 
 permissions:
   id-token: write
