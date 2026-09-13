@@ -107,6 +107,102 @@ The CI workflow acts as a mandatory pre-merge quality gate. It executes on every
    npm run build
    ```
 
+#### Security Scanning
+
+Two additional jobs run alongside the lint and build gates.
+
+**Secret scanning (Gitleaks).** `gitleaks/gitleaks-action@v3` scans for
+hardcoded credentials on pull requests and pushes. The checkout uses
+`fetch-depth: 0` so the scan covers the **full commit history**, not just the
+tip: a secret added in an earlier commit and deleted later would otherwise go
+undetected, and deletion is not remediation — anything committed is still in
+the history. The repository is personal-account owned, so no `GITLEAKS_LICENSE`
+is required (that applies to organizations only). If this job ever exceeds
+roughly two minutes, switch to a bounded range scan rather than dropping
+history coverage.
+
+**Vulnerability and misconfiguration scanning (Trivy).** Three modes:
+
+| Mode | Target | Enforcement |
+| --- | --- | --- |
+| `fs` | `app/` dependencies | **Blocking** at HIGH/CRITICAL (`ignore-unfixed`) |
+| `image` | the container built in-job | **Blocking** at HIGH/CRITICAL |
+| `config` | Terraform in both roots | **Advisory** (`continue-on-error`) |
+
+The image scan builds the container and scans it **before any registry push**.
+This is deliberate and complements — rather than duplicates — ECR's
+`scan_on_push`: scan-on-push reports findings only *after* the image is in the
+registry and already pullable, so it is detection after the fact. The CI scan is
+the gate that stops a vulnerable artifact from being published. Keeping both
+gives pre-publication blocking plus ongoing registry-side visibility as new CVEs
+are disclosed against images already stored.
+
+The IaC scan starts advisory on purpose: its findings have not yet been
+triaged, and a wall of unassessed warnings blocking every PR trains people to
+ignore the signal. Promote it to blocking after roughly two weeks of observed
+output.
+
+#### Dependency Updates
+
+`.github/dependabot.yml` enables Dependabot for four ecosystems:
+`github-actions` (weekly), `docker` in `/app` (weekly), `npm` in `/app`
+(weekly), and `pip` at the root (monthly — the only pip manifest is
+`requirements-docs.txt`). Updates are grouped per ecosystem to keep PR volume
+reviewable.
+
+`app/Dockerfile` pins both base images by digest
+(`node:20-alpine@sha256:…`, `nginx:alpine-slim@sha256:…`) so a rebuild resolves
+the exact same bytes instead of whatever the floating tag points at. The pinned
+values are multi-arch manifest-list digests, which keeps normal platform
+resolution intact if builds ever go multi-platform. Dependabot's `docker`
+ecosystem revises the tag and digest together.
+
+The runtime stage uses **`nginx:alpine-slim`**, the official minimal nginx
+variant, and installs or upgrades **no packages at all**. Both properties
+matter:
+
+- **Controlled build inputs.** Two specific things are fixed, and it is worth
+  being precise about which:
+    - Digest pinning fixes the **contents of the selected base image**, so an
+      upstream tag move cannot silently change that input between builds.
+    - Removing `apk` operations eliminates **live Alpine-repository resolution**
+      from the runtime stage, so package versions are not chosen at build time
+      from a moving repository.
+
+    What this does *not* establish: it is **not** a guarantee that two separate
+    builds produce byte-identical images. PR CI scans a **candidate image built
+    from the proposed source and Dockerfile**. The deployment workflow
+    **rebuilds after merge**, so artifact identity between the scanned image and
+    the deployed image **is not guaranteed**. Guaranteeing that the scanned
+    artifact is exactly the deployed artifact would require
+    **build-once-and-promote** — build, scan, push, then deploy that same
+    digest — which is **outside this PR's scope**.
+- **Passing the gate without a floating upgrade.** The fuller `alpine` and
+  `stable-alpine` variants ship util-linux/`libuuid`, which currently carries 7
+  fixable HIGH/CRITICAL advisories and fails the blocking image scan.
+  `alpine-slim` omits those packages and scans clean, so the gate is satisfied
+  by choosing a smaller base rather than by mutating packages at build time or
+  relaxing the scan.
+
+Security patches therefore arrive one way only: **advance the pinned digest**
+(weekly, via Dependabot). Do not add package installation to the runtime stage.
+
+!!! note "Accepted risk: third-party actions are pinned by tag, not SHA"
+    Workflow steps reference actions by major-version tag (`@v4`) rather than a
+    commit SHA. A tag is mutable, so a compromised upstream release could reach
+    this pipeline. This deferral is an **explicit accepted risk (medium)**:
+    Dependabot's `github-actions` ecosystem provides update visibility, but it
+    does not eliminate the exposure. Revisit if this repository starts handling
+    third-party contributions.
+
+Digest pinning has a cost worth stating: between Dependabot cycles the base
+images are frozen, so a patched upstream image is not picked up until an update
+PR lands. The weekly cadence bounds that staleness to about a week plus review
+time. That is the deliberate trade for controlled build inputs — a build-time
+package upgrade would shorten the patch lag, but it would reintroduce
+repository-time resolution and make the base-image contents vary between builds
+of the same commit.
+
 ---
 
 ### 2. ECR Image Build & Push (`build-push-ecr.yml`)

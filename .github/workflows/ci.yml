@@ -127,3 +127,72 @@ jobs:
 
       - name: Run platform lifecycle unit tests
         run: python3 -m unittest discover -s tests -v
+
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 fetches the full commit history. Gitleaks defaults to
+      # scanning only what is checked out, so without this a secret introduced
+      # in an earlier commit and later deleted would go undetected.
+      #
+      # Justification: this repository's history is small, so a full-history
+      # scan costs seconds. Growth path — if this job exceeds roughly 2 minutes,
+      # switch to a bounded range scan via GITLEAKS_ENABLE_COMMENTS/--log-opts
+      # (for example `--log-opts=${{ github.event.pull_request.base.sha }}..HEAD`)
+      # rather than dropping history coverage entirely.
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # GITLEAKS_LICENSE is required for organization-owned repositories only.
+      # This repository is personal-account owned, so GITHUB_TOKEN suffices.
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  vuln-scan:
+    name: Vulnerability & IaC Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Dependency/filesystem scan of the application tree. Blocking at HIGH+.
+      - name: Trivy filesystem scan (app)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: app
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # Build the image locally so it can be scanned BEFORE any registry push.
+      # ECR scan-on-push only reports findings after the artifact is already
+      # pullable; this is the actual gate. No registry credentials are needed.
+      - name: Build application image for scanning
+        run: docker build -t devops-bootcamp-app:ci-scan app
+
+      - name: Trivy image scan (pre-push gate)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: devops-bootcamp-app:ci-scan
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # Terraform misconfiguration scan across both roots. Advisory for now:
+      # continue-on-error keeps unassessed noise from blocking delivery. Promote
+      # to blocking after roughly two weeks of observed findings.
+      - name: Trivy IaC config scan (advisory)
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
