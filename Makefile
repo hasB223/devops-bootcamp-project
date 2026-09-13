@@ -1,4 +1,4 @@
-.PHONY: status health park unpark help
+.PHONY: status health park unpark test-platform help
 
 help:
 	@echo "DevOps Bootcamp Platform Lifecycle Management"
@@ -8,6 +8,7 @@ help:
 	@echo "  make health    - Probe web.hasb.dev and monitoring.hasb.dev endpoints"
 	@echo "  make park      - Gracefully stop compute fleet and clean up 5-resource network stack"
 	@echo "  make unpark    - Restore network stack via guarded plan/apply, start compute, assert health"
+	@echo "  make test-platform - Run platform lifecycle unit tests (no AWS/Terraform/HTTP/IMDS calls)"
 	@echo ""
 
 status:
@@ -21,3 +22,6 @@ park:
 
 unpark:
 	python3 scripts/platform.py unpark
+
+test-platform:
+	python3 -m unittest discover -s tests -v
