@@ -1,0 +1,68 @@
+---
+# Dependabot version updates.
+#
+# Scope per the hardening plan's Phase 3 (DR-05, DR-08): four ecosystems, with
+# grouping so routine bumps arrive as one reviewable PR per ecosystem instead of
+# one per dependency.
+#
+# Note on DR-08: third-party GitHub Actions remain pinned by major-version tag
+# rather than commit SHA. That deferral is an explicit accepted risk (medium) —
+# Dependabot's `github-actions` ecosystem provides update visibility, but a
+# moved tag is still trusted. See docs/cicd.md.
+version: 2
+
+updates:
+  # CI workflow actions.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
+
+  # Application container base images. Dependabot revises the tag and the pinned
+  # digest together, which is what keeps app/Dockerfile's pins current.
+  - package-ecosystem: docker
+    directory: /app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      docker:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"
+
+  # Frontend dependencies (manifest: app/package.json + app/package-lock.json).
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"
+
+  # Python tooling. The only pip manifest in the repository is
+  # requirements-docs.txt at the root; monthly cadence is sufficient for a
+  # docs-only toolchain.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      pip:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"

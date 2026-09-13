@@ -1,0 +1,25 @@
+# Gitleaks false-positive allowlist.
+#
+# Every entry must be justified. A real credential is NEVER silenced here —
+# it gets rotated and reported. These entries are documentation placeholders
+# that the `curl-auth-user` rule cannot distinguish from live basic-auth
+# credentials.
+#
+# Reviewed 2026-09-13 against a full-history baseline scan (59 commits):
+# 3 findings, all the same `docs/runbook.md` snippet, all false positives.
+#
+# The snippet is a Grafana verification command passing the `-u` flag with the
+# user `admin` and an angle-bracketed GRAFANA_ADMIN_PASSWORD placeholder that
+# the operator substitutes from Infisical. (The literal line is not reproduced
+# here, because quoting it would itself trip the same rule.) It is not, and
+# never was, a secret: the surrounding paragraph documents rotation via
+# Infisical, and the repository holds zero static credentials — all AWS access
+# is OIDC-federated.
+#
+# Current working-tree occurrence (line number moves as the runbook is edited):
+docs/runbook.md:curl-auth-user:221
+
+# Historical occurrences of the same placeholder line. Fingerprints are
+# commit-scoped, so a full-history scan needs each one listed explicitly.
+42f5872f752b84b2f3ec513933ef2aa0c4bdbb84:docs/runbook.md:curl-auth-user:229
+3732918aa847335ca96057bc92f6961c6d34877e:docs/runbook.md:curl-auth-user:214
