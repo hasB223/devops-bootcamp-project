@@ -32,10 +32,10 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_tag == ''
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -71,7 +71,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag == ''
     steps:
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -178,7 +178,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag != ''
     steps:
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION }}
