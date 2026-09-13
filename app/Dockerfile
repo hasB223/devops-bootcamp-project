@@ -6,7 +6,7 @@
 # normal platform resolution if builds ever go multi-platform (the workflow is
 # amd64-only today). Dependabot's docker ecosystem revises tag and digest
 # together; see .github/dependabot.yml.
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
+FROM node:26-alpine@sha256:ef24c5053d50fdc3e4e56eb4e7ddb7861874ab0fdc797046ba897581deb8e868 AS builder
 
 WORKDIR /app
 
