@@ -2,8 +2,15 @@
 # ECR Private Repository
 # ==============================================================================
 resource "aws_ecr_repository" "app" {
-  name                 = "devops-bootcamp/final-project-${var.owner_slug}"
-  image_tag_mutability = "MUTABLE"
+  name = "devops-bootcamp/final-project-${var.owner_slug}"
+  # SHA-tagged images are immutable once pushed; `latest` is excluded so the
+  # rolling tag (used by the Ansible deploy path) can keep moving.
+  image_tag_mutability = "IMMUTABLE_WITH_EXCLUSION"
+
+  image_tag_mutability_exclusion_filter {
+    filter_type = "WILDCARD"
+    filter      = "latest"
+  }
 
   image_scanning_configuration {
     scan_on_push = true
