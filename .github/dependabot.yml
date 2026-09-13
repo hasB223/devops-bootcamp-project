@@ -23,7 +23,7 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "ci"
+      prefix: "ci(deps)"
 
   # Application container base images. Dependabot revises the tag and the pinned
   # digest together, which is what keeps app/Dockerfile's pins current.
@@ -37,7 +37,7 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "chore"
+      prefix: "chore(deps)"
 
   # Frontend dependencies (manifest: app/package.json + app/package-lock.json).
   - package-ecosystem: npm
@@ -50,7 +50,7 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "chore"
+      prefix: "chore(deps)"
 
   # Python tooling. The only pip manifest in the repository is
   # requirements-docs.txt at the root; monthly cadence is sufficient for a
@@ -65,4 +65,4 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "chore"
+      prefix: "chore(deps)"
