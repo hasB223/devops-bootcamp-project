@@ -281,6 +281,21 @@ Expected responses:
 - `https://docs.hasb.dev`: `HTTP/2 200`
 - `https://hasb223.github.io/devops-bootcamp-project/`: `HTTP/2 301` (Redirect to `https://docs.hasb.dev/`)
 
+### Platform Lifecycle Unit Tests
+
+```bash
+make test-platform
+```
+
+A standard-library (`unittest`) suite covering the lifecycle engine's guards:
+network state classification, the unpark allowlist and plan guard, the
+self-termination guard, endpoint health probing, and the exact Terraform
+commands used by park/unpark (targets and `-var` overrides). It performs
+**no AWS, Terraform, HTTP, or IMDS calls** — every external boundary is
+mocked — so it is safe to run anywhere, including a parked or
+unprovisioned environment. The suite also runs in CI as the
+`Platform Lifecycle Unit Tests` job.
+
 ### Documentation Portal Deployment & CDN Cache Invalidation
 
 `docs.hasb.dev` is hosted on GitHub Pages and accelerated via Cloudflare edge caching. GitHub Pages and upstream Fastly proxies specify `cache-control: max-age=600` (10 minutes).

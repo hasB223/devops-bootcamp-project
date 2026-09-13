@@ -112,3 +112,18 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+  platform-tests:
+    name: Platform Lifecycle Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run platform lifecycle unit tests
+        run: python3 -m unittest discover -s tests -v
