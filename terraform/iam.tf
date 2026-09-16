@@ -255,6 +255,78 @@ resource "aws_iam_role" "github_actions" {
   }
 }
 
+# ==============================================================================
+# Scoped GitHub Actions Roles
+#
+# The legacy github_actions role remains during migration and soak. Runtime
+# subjects below were observed from both manual and scheduled main-branch runs.
+# The pull-request subject was observed from same-repository PR #53 in diagnostic
+# run 35090523901 before this migration was applied.
+# ==============================================================================
+locals {
+  github_oidc_repository_subject = "repo:hasB223@124649481/devops-bootcamp-project@1358353685"
+
+  github_actions_scoped_roles = {
+    ecr_publisher = {
+      name    = "devops-github-actions-ecr-publisher-role"
+      subject = "${local.github_oidc_repository_subject}:ref:refs/heads/main"
+    }
+    ssm_deployer = {
+      name    = "devops-github-actions-ssm-deployer-role"
+      subject = "${local.github_oidc_repository_subject}:environment:production"
+    }
+    lifecycle_mutator = {
+      name    = "devops-github-actions-lifecycle-mutator-role"
+      subject = "${local.github_oidc_repository_subject}:ref:refs/heads/main"
+    }
+    status_readonly = {
+      name    = "devops-github-actions-status-readonly-role"
+      subject = "${local.github_oidc_repository_subject}:ref:refs/heads/main"
+    }
+    terraform_planner = {
+      name    = "devops-github-actions-terraform-planner-role"
+      subject = "${local.github_oidc_repository_subject}:pull_request"
+    }
+  }
+}
+
+data "aws_iam_policy_document" "github_actions_scoped_assume_role" {
+  for_each = local.github_actions_scoped_roles
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = [each.value.subject]
+    }
+  }
+}
+
+resource "aws_iam_role" "github_actions_scoped" {
+  for_each = local.github_actions_scoped_roles
+
+  name               = each.value.name
+  assume_role_policy = data.aws_iam_policy_document.github_actions_scoped_assume_role[each.key].json
+
+  tags = {
+    Name = each.value.name
+  }
+}
+
 data "aws_iam_policy_document" "github_actions_ecr_push" {
   statement {
     sid       = "ECRGetAuthorizationToken"
@@ -287,6 +359,11 @@ resource "aws_iam_policy" "github_actions_ecr" {
 
 resource "aws_iam_role_policy_attachment" "github_actions_ecr" {
   role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_ecr.arn
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_ecr_publisher" {
+  role       = aws_iam_role.github_actions_scoped["ecr_publisher"].name
   policy_arn = aws_iam_policy.github_actions_ecr.arn
 }
 
@@ -325,6 +402,13 @@ data "aws_iam_policy_document" "github_actions_ssm_deploy" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid       = "ECRDescribeDeploymentImage"
+    effect    = "Allow"
+    actions   = ["ecr:DescribeImages"]
+    resources = [aws_ecr_repository.app.arn]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_ssm" {
@@ -335,6 +419,11 @@ resource "aws_iam_policy" "github_actions_ssm" {
 
 resource "aws_iam_role_policy_attachment" "github_actions_ssm" {
   role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_ssm.arn
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_ssm_deployer" {
+  role       = aws_iam_role.github_actions_scoped["ssm_deployer"].name
   policy_arn = aws_iam_policy.github_actions_ssm.arn
 }
 
@@ -526,4 +615,100 @@ resource "aws_iam_policy" "github_actions_lifecycle" {
 resource "aws_iam_role_policy_attachment" "github_actions_lifecycle" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.github_actions_lifecycle.arn
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_lifecycle_mutator" {
+  role       = aws_iam_role.github_actions_scoped["lifecycle_mutator"].name
+  policy_arn = aws_iam_policy.github_actions_lifecycle.arn
+}
+
+# ==============================================================================
+# GitHub Actions Read-Only Status Policy
+# ==============================================================================
+data "aws_iam_policy_document" "github_actions_status_readonly" {
+  statement {
+    sid       = "EC2DescribePlatformStatus"
+    effect    = "Allow"
+    actions   = ["ec2:Describe*"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_status_readonly" {
+  name        = "devops-github-actions-status-readonly-policy"
+  description = "Read-only EC2 discovery for GitHub Actions platform status checks"
+  policy      = data.aws_iam_policy_document.github_actions_status_readonly.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_status_readonly" {
+  role       = aws_iam_role.github_actions_scoped["status_readonly"].name
+  policy_arn = aws_iam_policy.github_actions_status_readonly.arn
+}
+
+# ==============================================================================
+# GitHub Actions Read-Only Terraform Planner Policy
+# ==============================================================================
+data "aws_iam_policy_document" "github_actions_terraform_planner" {
+  statement {
+    sid       = "EC2ReadOnlyRefresh"
+    effect    = "Allow"
+    actions   = ["ec2:Describe*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "IAMReadOnlyRefresh"
+    effect    = "Allow"
+    actions   = ["iam:Get*", "iam:List*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "ECRReadOnlyRefresh"
+    effect    = "Allow"
+    actions   = ["ecr:Describe*", "ecr:Get*", "ecr:List*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "S3RemoteStateBucketRead"
+    effect = "Allow"
+    actions = [
+      "s3:GetBucketLocation",
+      "s3:GetBucketVersioning",
+      "s3:ListBucket"
+    ]
+    resources = ["arn:aws:s3:::devops-bootcamp-terraform-${var.owner_slug}"]
+  }
+
+  statement {
+    sid       = "S3RemoteStateObjectRead"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::devops-bootcamp-terraform-${var.owner_slug}/foundation/terraform.tfstate"]
+  }
+
+  statement {
+    sid    = "S3ManagedBucketReadOnlyRefresh"
+    effect = "Allow"
+    actions = [
+      "s3:Get*",
+      "s3:List*"
+    ]
+    resources = [
+      aws_s3_bucket.ansible_ssm.arn,
+      "${aws_s3_bucket.ansible_ssm.arn}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github_actions_terraform_planner" {
+  name        = "devops-github-actions-terraform-planner-policy"
+  description = "Read-only Terraform state and AWS refresh access for pull-request plans"
+  policy      = data.aws_iam_policy_document.github_actions_terraform_planner.json
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_terraform_planner" {
+  role       = aws_iam_role.github_actions_scoped["terraform_planner"].name
+  policy_arn = aws_iam_policy.github_actions_terraform_planner.arn
 }

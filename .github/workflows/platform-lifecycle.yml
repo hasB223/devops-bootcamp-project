@@ -35,6 +35,12 @@ jobs:
     # Safety gate: If scheduled run, execute only when AUTO_PARK_ENABLED is 'true'
     if: github.event_name != 'schedule' || vars.AUTO_PARK_ENABLED == 'true'
     steps:
+      - name: Enforce main-only lifecycle operations
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Platform lifecycle operations are main-only; use a pull request to main."
+          exit 1
+
       - name: Check out repository
         uses: actions/checkout@v7
 
@@ -45,18 +51,36 @@ jobs:
             echo "action=park" >> "$GITHUB_OUTPUT"
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
             echo "allow_unrelated=false" >> "$GITHUB_OUTPUT"
+            echo "role_arn=${{ vars.AWS_ROLE_LIFECYCLE }}" >> "$GITHUB_OUTPUT"
             echo "==> Triggered by schedule. Resolved ACTION strictly forced to: park."
           else
-            echo "action=${{ github.event.inputs.action }}" >> "$GITHUB_OUTPUT"
+            ACTION="${{ github.event.inputs.action }}"
+            echo "action=$ACTION" >> "$GITHUB_OUTPUT"
             echo "dry_run=${{ github.event.inputs.dry_run }}" >> "$GITHUB_OUTPUT"
             echo "allow_unrelated=${{ github.event.inputs.allow_unrelated_changes }}" >> "$GITHUB_OUTPUT"
-            echo "==> Triggered manually. Resolved ACTION: ${{ github.event.inputs.action }}."
+            case "$ACTION" in
+              park|unpark)
+                echo "role_arn=${{ vars.AWS_ROLE_LIFECYCLE }}" >> "$GITHUB_OUTPUT"
+                ;;
+              status)
+                echo "role_arn=${{ vars.AWS_ROLE_READONLY }}" >> "$GITHUB_OUTPUT"
+                ;;
+              health)
+                echo "role_arn=" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "::error::Unsupported lifecycle action: $ACTION"
+                exit 1
+                ;;
+            esac
+            echo "==> Triggered manually. Resolved ACTION: $ACTION."
           fi
 
       - name: Configure AWS credentials via OIDC
+        if: steps.resolver.outputs.action != 'health'
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ steps.resolver.outputs.role_arn }}
           aws-region: ${{ vars.AWS_REGION }}
           audience: sts.amazonaws.com
 

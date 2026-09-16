@@ -88,7 +88,12 @@ aws sts get-caller-identity
     - `controller_private_ip`: `10.0.0.135`
     - `monitoring_private_ip`: `10.0.0.136`
     - `ecr_repository_url`: `164824552037.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-hasb`
-    - `github_actions_role_arn`: `arn:aws:iam::164824552037:role/devops-github-actions-role`
+    - `github_actions_role_arn`: legacy rollback role retained during scoped-role soak
+    - `github_actions_ecr_publisher_role_arn`: main-branch ECR publishing role
+    - `github_actions_ssm_deployer_role_arn`: production-environment SSM deployment role
+    - `github_actions_lifecycle_mutator_role_arn`: main-branch park/unpark role
+    - `github_actions_status_readonly_role_arn`: read-only status role
+    - `github_actions_terraform_planner_role_arn`: read-only PR planner role (unused until its PR subject is verified and the plan gate lands)
 
 ---
 
@@ -420,6 +425,10 @@ You can trigger lifecycle operations directly from GitHub without needing local 
 2. Click **Run workflow**.
 3. Select the desired **Action** (`status`, `health`, `park`, `unpark`).
 4. Toggle `dry_run: true` to preview the planned changes in GitHub Actions logs without making live modifications.
+
+The workflow is deliberately main-only. Dispatching it from another branch stops with an explanatory error before AWS authentication. `status` uses the read-only role, `park` and `unpark` use the lifecycle-mutator role, and `health` skips AWS credential configuration entirely.
+
+Production container deploys use the separate `production` GitHub environment and require its approval gate. Publishing and deployment role ARNs come from `AWS_ROLE_PUBLISH` and `AWS_ROLE_DEPLOY`; lifecycle role ARNs come from `AWS_ROLE_LIFECYCLE` and `AWS_ROLE_READONLY`. Keep the legacy `AWS_ROLE_TO_ASSUME` variable until the scoped roles complete their soak and the legacy role is retired.
 
 !!! note "Optional Nightly Auto-Park Protection"
     A scheduled cron runs at `00:00 SGT` (`16:00 UTC`). It is protected by the repository variable `vars.AUTO_PARK_ENABLED`. By default, it is inactive (`false`). If you wish to enable automatic nightly shutdown to prevent accidental overnight spend, set `AUTO_PARK_ENABLED = "true"` under repository **Settings -> Secrets and variables -> Actions -> Variables**. Scheduled executions strictly force the `park` action; unparking is never permitted on schedule.

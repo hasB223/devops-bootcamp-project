@@ -31,13 +31,19 @@ jobs:
     # Skip container build & push when rolling back to an existing image tag
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.deploy_tag == ''
     steps:
+      - name: Enforce main-only publishing
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Container publishing is main-only; use a pull request to main."
+          exit 1
+
       - name: Check out repository
         uses: actions/checkout@v7
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ vars.AWS_ROLE_PUBLISH }}
           aws-region: ${{ vars.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -67,13 +73,20 @@ jobs:
   deploy-current:
     name: Deploy Current Build to Web EC2 via SSM
     runs-on: ubuntu-latest
+    environment: production
     needs: [build-and-push]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag == ''
     steps:
+      - name: Enforce main-only deployment
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Container deployment is main-only; use a pull request to main."
+          exit 1
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ vars.AWS_ROLE_DEPLOY }}
           aws-region: ${{ vars.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -175,12 +188,19 @@ jobs:
   deploy-existing-tag:
     name: Deploy Existing Tag to Web EC2 via SSM (Rollback)
     runs-on: ubuntu-latest
+    environment: production
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_deploy == 'true' && github.event.inputs.deploy_tag != ''
     steps:
+      - name: Enforce main-only deployment
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Container deployment is main-only; use a pull request to main."
+          exit 1
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ vars.AWS_ROLE_DEPLOY }}
           aws-region: ${{ vars.AWS_REGION }}
           audience: sts.amazonaws.com
 
