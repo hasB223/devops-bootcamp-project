@@ -96,8 +96,33 @@ output "ansible_ssm_bucket_name" {
 # CI/CD Outputs
 # ==============================================================================
 output "github_actions_role_arn" {
-  description = "IAM Role ARN for GitHub Actions OIDC authentication"
+  description = "Legacy IAM Role ARN retained temporarily during scoped-role migration"
   value       = aws_iam_role.github_actions.arn
+}
+
+output "github_actions_ecr_publisher_role_arn" {
+  description = "IAM role ARN for publishing container images from main"
+  value       = aws_iam_role.github_actions_scoped["ecr_publisher"].arn
+}
+
+output "github_actions_ssm_deployer_role_arn" {
+  description = "IAM role ARN for production-environment SSM deployments"
+  value       = aws_iam_role.github_actions_scoped["ssm_deployer"].arn
+}
+
+output "github_actions_lifecycle_mutator_role_arn" {
+  description = "IAM role ARN for platform park and unpark operations"
+  value       = aws_iam_role.github_actions_scoped["lifecycle_mutator"].arn
+}
+
+output "github_actions_status_readonly_role_arn" {
+  description = "IAM role ARN for read-only platform status checks"
+  value       = aws_iam_role.github_actions_scoped["status_readonly"].arn
+}
+
+output "github_actions_terraform_planner_role_arn" {
+  description = "IAM role ARN for read-only pull-request Terraform plans"
+  value       = aws_iam_role.github_actions_scoped["terraform_planner"].arn
 }
 
 # ==============================================================================
@@ -124,4 +149,3 @@ output "ansible_ssm_inventory" {
     ansible_python_interpreter=/usr/bin/python3
   EOT
 }
-

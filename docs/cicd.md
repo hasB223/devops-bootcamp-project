@@ -26,8 +26,8 @@ The CI/CD pipeline implements a secure, automated delivery lifecycle for all inf
 | `.github/workflows/build-push-ecr.yml` | Main-branch container image build and push to private AWS ECR via OIDC |
 | `.github/workflows/pages.yml` | Main-branch static documentation portal deployment to GitHub Pages |
 | `docs/index.html` | Browsable project documentation portal exposing endpoints, runbooks, and architecture |
-| `terraform/iam.tf` | OIDC identity provider (`token.actions.githubusercontent.com`) and scoped IAM role/policy |
-| `terraform/outputs.tf` | Exports `github_actions_role_arn` for pipeline configuration |
+| `terraform/iam.tf` | OIDC identity provider (`token.actions.githubusercontent.com`) and scoped IAM roles/policies |
+| `terraform/outputs.tf` | Exports the legacy and role-specific GitHub Actions role ARNs |
 
 ---
 
@@ -41,9 +41,10 @@ Authentication between GitHub Actions and AWS is established using OpenID Connec
 | --- | --- |
 | **OIDC Provider URL** | `https://token.actions.githubusercontent.com` |
 | **Audience (`aud`)** | `sts.amazonaws.com` |
-| **Subject Claim (`sub`)** | Wildcard matching (`StringLike`) for two accepted repository subject prefixes:<br>1. Standard: `repo:hasB223/devops-bootcamp-project:*`<br>2. Immutable-ID: `repo:hasB223@124649481/devops-bootcamp-project@1358353685:*`<br>Any workflow run in this repository (any branch, PR, or environment) can therefore assume the role. Tightening trust to exact subjects is planned follow-up work. |
-| **IAM Role** | `devops-github-actions-role` |
-| **Role Permissions** | Scoped ECR push: `ecr:GetAuthorizationToken` (`*`), and image actions on `aws_ecr_repository.app.arn` |
+| **Runtime Subject Claim (`sub`)** | Exact immutable-ID subjects using `StringEquals`: publisher, lifecycle, and status use `repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main`; deployer uses `repo:hasB223@124649481/devops-bootcamp-project@1358353685:environment:production`. The branch-ref form was observed in manual and scheduled diagnostic runs; the name-only form was not observed. |
+| **Runtime Roles** | ECR publisher, SSM deployer, lifecycle mutator, and status read-only. Each workflow job assumes only the role needed for its action. |
+| **Terraform Planner** | A fifth read-only role is defined for the later state-backed PR plan gate. Same-repository PR #53 diagnostic run `35090523901` observed `repo:hasB223@124649481/devops-bootcamp-project@1358353685:pull_request`, matching the role's exact `StringEquals` trust condition. |
+| **Legacy Migration Role** | `devops-github-actions-role` remains temporarily as the rollback anchor during soak. Its wildcard trust is removed in the follow-up retirement change, after the scoped roles pass live acceptance. |
 
 ### GitHub Actions Variables
 
@@ -52,7 +53,12 @@ The pipelines consume non-sensitive parameters as **Repository Variables** (`var
 | Variable Name | Example / Production Value | Source |
 | --- | --- | --- |
 | `AWS_REGION` | `ap-southeast-1` | AWS deployment region |
-| `AWS_ROLE_TO_ASSUME` | `arn:aws:iam::164824552037:role/devops-github-actions-role` | `terraform output github_actions_role_arn` |
+| `AWS_ROLE_PUBLISH` | Role ARN | `terraform output github_actions_ecr_publisher_role_arn` |
+| `AWS_ROLE_DEPLOY` | Role ARN | `terraform output github_actions_ssm_deployer_role_arn` |
+| `AWS_ROLE_LIFECYCLE` | Role ARN | `terraform output github_actions_lifecycle_mutator_role_arn` |
+| `AWS_ROLE_READONLY` | Role ARN | `terraform output github_actions_status_readonly_role_arn` |
+| `AWS_ROLE_TERRAFORM_PLAN` | Role ARN | `terraform output github_actions_terraform_planner_role_arn` (reserved for the later PR plan gate) |
+| `AWS_ROLE_TO_ASSUME` | Legacy role ARN | Temporary rollback anchor; do not remove until scoped-role soak completes |
 | `ECR_REPOSITORY` | `devops-bootcamp/final-project-hasb` | `terraform output ecr_repository_url` (name segment) |
 
 !!! important "Zero Static Credentials Policy"
@@ -221,7 +227,7 @@ This workflow packages the containerized application and publishes it to AWS Pri
 
 #### Workflow Execution Flow
 
-1. **OIDC Authentication**: `aws-actions/configure-aws-credentials@v4` requests a signed JWT from GitHub's OIDC provider and exchanges it for temporary AWS STS credentials using `role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}`.
+1. **OIDC Authentication**: `aws-actions/configure-aws-credentials@v6` requests a signed JWT from GitHub's OIDC provider and exchanges it for temporary AWS STS credentials. Publishing uses `vars.AWS_ROLE_PUBLISH`; the two production deployment jobs use `vars.AWS_ROLE_DEPLOY` and the protected `production` environment.
 2. **ECR Login**: `aws-actions/amazon-ecr-login@v2` authenticates Docker Engine to the private ECR registry.
 3. **Container Build**: Builds the container using `app/Dockerfile` with the `app/` directory as context:
    ```bash
@@ -276,23 +282,16 @@ terraform plan
 terraform apply
 ```
 
-#### Narrow Bootstrap / Surgical Update Option
-Targeted apply using `-target` is reserved strictly as a narrow bootstrap or surgical update option (for example, provisioning or updating the CI/OIDC IAM role and ECR repository without spinning up the full EC2 compute instances):
+For the scoped-role migration, review and apply a saved **full** plan. Do not use a targeted apply: the acceptance condition is an additive action set with no deletion of the legacy role, its three attachments, or the shared managed policies.
 
-```bash
-cd terraform
-terraform apply -target=aws_ecr_repository.app \
-                -target=aws_ecr_lifecycle_policy.app \
-                -target=aws_iam_openid_connect_provider.github \
-                -target=aws_iam_role.github_actions \
-                -target=aws_iam_policy.github_actions_ecr \
-                -target=aws_iam_role_policy_attachment.github_actions_ecr
-```
-
-Retrieve the provisioned role ARN:
+Retrieve the provisioned role ARNs:
 ```bash
 terraform output github_actions_role_arn
-# Output: arn:aws:iam::164824552037:role/devops-github-actions-role
+terraform output github_actions_ecr_publisher_role_arn
+terraform output github_actions_ssm_deployer_role_arn
+terraform output github_actions_lifecycle_mutator_role_arn
+terraform output github_actions_status_readonly_role_arn
+terraform output github_actions_terraform_planner_role_arn
 ```
 
 ### 2. Configure GitHub Repository Variables
@@ -302,9 +301,15 @@ Set the required Actions variables in GitHub repository settings (**Settings** -
 ```bash
 # Using GitHub CLI:
 gh variable set AWS_REGION --body "ap-southeast-1"
-gh variable set AWS_ROLE_TO_ASSUME --body "$(cd terraform && terraform output -raw github_actions_role_arn)"
+gh variable set AWS_ROLE_PUBLISH --body "$(cd terraform && terraform output -raw github_actions_ecr_publisher_role_arn)"
+gh variable set AWS_ROLE_DEPLOY --body "$(cd terraform && terraform output -raw github_actions_ssm_deployer_role_arn)"
+gh variable set AWS_ROLE_LIFECYCLE --body "$(cd terraform && terraform output -raw github_actions_lifecycle_mutator_role_arn)"
+gh variable set AWS_ROLE_READONLY --body "$(cd terraform && terraform output -raw github_actions_status_readonly_role_arn)"
+gh variable set AWS_ROLE_TERRAFORM_PLAN --body "$(cd terraform && terraform output -raw github_actions_terraform_planner_role_arn)"
 gh variable set ECR_REPOSITORY --body "devops-bootcamp/final-project-hasb"
 ```
+
+Create the `production` environment separately, restrict deployment branches to `main`, and configure the owner as required reviewer before switching deploy jobs to the scoped role. Keep `AWS_ROLE_TO_ASSUME` during soak so the workflow variables can be rolled back without a Terraform change.
 
 ### 3. Enable GitHub Pages & Custom Domain
 
@@ -376,16 +381,13 @@ After pushing or merging to `main`:
   Error: Not authorized to perform sts:AssumeRoleWithWebIdentity
   ```
 - **Cause**: The IAM role trust policy does not match the GitHub repository or branch claim.
-- **Fix**: Verify `terraform/iam.tf` includes both accepted wildcard subject prefixes in the trust policy condition:
+- **Fix**: Match the role to the job context and verify its exact `StringEquals` subject:
   ```hcl
-  test     = "StringLike"
+  test     = "StringEquals"
   variable = "token.actions.githubusercontent.com:sub"
-  values = [
-    "repo:hasB223/devops-bootcamp-project:*",
-    "repo:hasB223@124649481/devops-bootcamp-project@1358353685:*"
-  ]
+  values   = ["repo:hasB223@124649481/devops-bootcamp-project@1358353685:ref:refs/heads/main"]
   ```
-  Also ensure `audience = "sts.amazonaws.com"`.
+  The deployer instead requires the `:environment:production` subject. Also ensure `audience = "sts.amazonaws.com"`, the selected workflow ref is `main`, and the corresponding `AWS_ROLE_*` variable points to the intended role.
 
 ### 2. Terraform Validate Fails in CI
 - **Symptom**: `terraform validate` fails with missing provider or module errors.
