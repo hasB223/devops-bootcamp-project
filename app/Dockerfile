@@ -6,7 +6,7 @@
 # normal platform resolution if builds ever go multi-platform (the workflow is
 # amd64-only today). Dependabot's docker ecosystem revises tag and digest
 # together; see .github/dependabot.yml.
-FROM node:26-alpine@sha256:ef24c5053d50fdc3e4e56eb4e7ddb7861874ab0fdc797046ba897581deb8e868 AS builder
+FROM node:26-alpine@sha256:6f08a523443ddedf52941874c203475b0ad503e859ad70cb26ab8be9a517dbd5 AS builder
 
 WORKDIR /app
 
@@ -47,7 +47,7 @@ RUN npm run build
 # Patching model: security updates arrive by advancing this digest (Dependabot
 # `docker`, weekly, revises tag and digest together), not by mutating packages
 # at build time.
-FROM nginx:alpine-slim@sha256:3b171d7224b669faa3cc2137fea0a65301791df1ec1f271ebd2a2b7461f7fade
+FROM nginx:alpine-slim@sha256:ebd058041a732a2b2dc0b606e34572dd8e0034de6a4aa4d50d8c13a240ac6005
 
 # Copy compiled static assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
